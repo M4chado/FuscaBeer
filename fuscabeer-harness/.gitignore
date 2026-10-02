@@ -1,0 +1,19 @@
+# segredos
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Django
+staticfiles/
+media/
+
+# Claude Code: preferências pessoais não vão para o repositório
+.claude/settings.local.json
+CLAUDE.local.md
