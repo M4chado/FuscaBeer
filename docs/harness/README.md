@@ -14,7 +14,7 @@ Harness usado pela equipe: **Claude Code**.
 | Mecanismo | Onde | Dimensão do Agent Work Loop |
 |---|---|---|
 | Instruções | `AGENTS.md`, `CLAUDE.md` (importa o `AGENTS.md`) | Entendimento da tarefa |
-| Permissões: 9 allow, 3 ask, 3 deny | `.claude/settings.json` | Entrega confiável |
+| Permissões: 9 allow, 3 ask, 9 deny | `.claude/settings.json` | Entrega confiável |
 | Skill `criterio-para-teste` | `.claude/skills/criterio-para-teste/` | Execução controlada · Captura de aprendizado |
 | Hook `PostToolUse` com ruff | `.claude/settings.json` + `.claude/hooks/lint.sh` | Validação da mudança |
 

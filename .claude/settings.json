@@ -19,6 +19,12 @@
     ],
     "deny": [
       "Read(.env)",
+      "Read(.env.local)",
+      "Read(.env.production)",
+      "Bash(cat *.env)",
+      "Bash(head *.env)",
+      "Bash(tail *.env)",
+      "Bash(type *.env)",
       "Bash(rm -rf *)",
       "Bash(git push --force *)"
     ]

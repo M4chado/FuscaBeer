@@ -33,7 +33,7 @@ python manage.py behave                 # critérios de aceite em features/
 - Não altere `docs/specs/` sem aviso: a spec é a fonte da verdade. Proponha a mudança.
 - Cada critério de aceite (CA-xx) vira um cenário em `features/NNN-<feature>.feature` com o mesmo ID no nome.
 - Valores em R$ são inteiros em centavos. Datas usam `America/Sao_Paulo`.
-- Segredos só no `.env`, que não vai para o Git e é bloqueado nas permissões. Para saber as variáveis, leia `.env.example`.
+- Segredos só no `.env`, que não vai para o Git e é bloqueado nas permissões (Read de `.env`, `.env.local` e `.env.production`, e `cat`/`head`/`tail`/`type` do `.env`). Para saber as variáveis, leia `.env.example`.
 - Commit cita spec e critério: `feat(001): calcula troco em dinheiro (CA-02)`.
 - Servidores MCP: nenhum instalado.
 
