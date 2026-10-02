@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Hook PostToolUse (Edit|Write): roda o ruff no projeto depois de cada edição.
-# Sucesso: imprime "[hook ruff] OK". Falha: manda os erros para o Claude (exit 2).
+# Sucesso: imprime "[hook ruff] OK". Falha (lint ou ruff ausente): manda o aviso para o Claude (exit 2).
 
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
 
@@ -13,7 +13,7 @@ elif [ -x .venv/Scripts/ruff.exe ]; then
   RUFF=.venv/Scripts/ruff.exe
 else
   echo "[hook ruff] ruff não encontrado. Ative a .venv e rode: pip install -r requirements.txt" >&2
-  exit 1
+  exit 2
 fi
 
 if saida=$("$RUFF" check --output-format concise . 2>&1); then
