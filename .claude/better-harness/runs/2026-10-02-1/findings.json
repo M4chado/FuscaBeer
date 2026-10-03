@@ -1,0 +1,104 @@
+{
+  "summary": {
+    "projectName": "FuscaBeer",
+    "locale": "en",
+    "modelId": "agent-work-loop-v4",
+    "reportContractVersion": 25,
+    "overview": "O projeto tem um roteiro claro de spec, critério de aceite, cenário e commit, com lint automático, testes e permissões declaradas. A evidência de sessões não contém nenhuma edição de código, então o uso real desses mecanismos não foi observado. O único problema sustentado é que a prova de \"pronto\" tem três definições diferentes.",
+    "dimensions": [
+      {
+        "id": "task-understanding",
+        "label": "Task Understanding",
+        "score": 68,
+        "summary": "AGENTS.md, CLAUDE.md e a spec com RN e CA deixam o objetivo e o limite claros, mas nenhum episódio com mudança comprovou o uso.",
+        "findingRefs": []
+      },
+      {
+        "id": "controlled-execution",
+        "label": "Controlled Execution",
+        "score": 62,
+        "summary": "Há passos de setup, permissões allow, ask e deny e um hook de lint, só lidos e não exercitados nas sessões analisadas.",
+        "findingRefs": []
+      },
+      {
+        "id": "change-validation",
+        "label": "Change Validation",
+        "score": 55,
+        "summary": "Ruff, pytest e behave existem, mas a prova de pronto varia entre AGENTS.md, CLAUDE.md e a skill, e nenhuma checagem revisada e relevante foi observada.",
+        "findingRefs": [
+          "prova-de-pronto-divergente"
+        ]
+      },
+      {
+        "id": "reliable-delivery",
+        "label": "Reliable Delivery",
+        "score": 45,
+        "summary": "Não há aceitação nem recuperação observadas. O git push pede confirmação, mas nenhum gate mecânico garante a prova antes do commit.",
+        "findingRefs": []
+      },
+      {
+        "id": "learning-capture",
+        "label": "Learning Capture",
+        "score": 40,
+        "summary": "Existe uma skill de projeto, mas não há demanda repetida comprovada nem uso observado, então nada sustenta crédito adicional.",
+        "findingRefs": []
+      }
+    ],
+    "aiAgentPractice": {
+      "inspectedSurfaces": [
+        "Rules",
+        "Skills",
+        "Hooks"
+      ],
+      "coverageRows": [
+        {
+          "surface": "Rules",
+          "scopes": [
+            "Project"
+          ],
+          "count": 1,
+          "paths": [
+            "CLAUDE.md"
+          ]
+        },
+        {
+          "surface": "Skills",
+          "scopes": [
+            "Project"
+          ],
+          "count": 1,
+          "paths": [
+            ".claude/skills/criterio-para-teste/SKILL.md"
+          ]
+        },
+        {
+          "surface": "Hooks",
+          "scopes": [
+            "Project"
+          ],
+          "count": 1,
+          "paths": [
+            ".claude/settings.json"
+          ]
+        }
+      ]
+    },
+    "assignmentSummaries": []
+  },
+  "findings": [
+    {
+      "id": "prova-de-pronto-divergente",
+      "title": "Agente que segue a skill pode dar a tarefa por pronta sem a prova que o AGENTS.md exige",
+      "severity": "Low",
+      "reason": "Fato: o AGENTS.md exige `ruff check . && ruff format --check .`, `pytest` e `python manage.py behave` antes de todo commit, e o CLAUDE.md exige `pytest` e `python manage.py behave`. O passo 7 da skill criterio-para-teste define a prova completa como o cenário do CA, `pytest` e `ruff check .`, sem a checagem de formatação nem o behave completo. O hook de lint também roda só `ruff check`, no projeto inteiro e a cada Edit ou Write, enquanto o CLAUDE.md o descreve como a cada edição de `.py`. Inferência: quem seguir só a skill pode declarar o CA concluído sem rodar os outros cenários, e a falha de formatação só aparece depois. Incerteza: nenhuma sessão analisada tem edição, então o efeito não foi observado, e não há CI nem hook de commit que cubra a diferença.",
+      "dimensionRefs": [
+        "change-validation"
+      ],
+      "aiFixPrompt": "/better-harness fix this issue\n\nAlinhe a definição de \"pronto\" entre `AGENTS.md`, `CLAUDE.md` e `.claude/skills/criterio-para-teste/SKILL.md`, mantendo o `AGENTS.md` como fonte e sem editar `docs/specs/`. Faça o passo 7 da skill apontar para os mesmos comandos do AGENTS.md (`ruff check . && ruff format --check .`, `pytest`, `python manage.py behave`), e corrija no CLAUDE.md a frase que diz que o hook roda a cada edição de `.py`, de acordo com o que `.claude/hooks/lint.sh` faz de fato. Não crie hook nem CI novos sem pedido separado.\n\n## Validation\n\n- Rode `ruff check . && ruff format --check .`, `pytest` e `python manage.py behave` e mostre a saída\n- Confirme que os três arquivos listam os mesmos comandos de prova e que o texto do hook no CLAUDE.md bate com `lint.sh`",
+      "expectedArtifact": "Skill",
+      "expectedOutput": [
+        "Dar ao próximo agente uma única definição de pronto, repetida de forma idêntica na skill, no AGENTS.md e no CLAUDE.md, e uma descrição do hook que corresponda ao script."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="pt-br">
+<head><meta charset="utf-8"><title>Vendas do dia</title></head>
+<body>
+  {% for mensagem in messages %}<p>{{ mensagem }}</p>{% endfor %}
+  <ul>
+    {% for venda in vendas %}<li>R$ {{ venda.total }} em {{ venda.forma }}</li>{% endfor %}
+  </ul>
+</body>
+</html>
