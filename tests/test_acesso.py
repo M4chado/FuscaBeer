@@ -8,6 +8,7 @@ ROTAS = [
     ("post", "/vendas/"),
     ("get", "/produtos/"),
     ("post", "/produtos/"),
+    ("post", "/produtos/1/"),
 ]
 
 

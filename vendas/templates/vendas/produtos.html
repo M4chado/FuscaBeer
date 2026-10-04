@@ -15,12 +15,24 @@
   </div>
 </form>
 
-<ul class="cartao" style="list-style:none">
+<ul style="list-style:none;padding:0">
   {% for produto in produtos %}
-  <li class="produto" id="produto-{{ produto.pk }}">
+  <li class="produto cartao" id="produto-{{ produto.pk }}">
     <strong class="nome">{{ produto.nome }}</strong>
     <span class="preco">{{ produto.preco_centavos|reais }}</span>
     <span class="selo situacao {% if not produto.ativo %}cancelada{% endif %}">{{ produto.ativo|yesno:"Ativo,Inativo" }}</span>
+    <div class="linha" style="margin-top:6px">
+      <form class="alterar-preco linha" method="post" action="/produtos/{{ produto.pk }}/" style="flex:2 1 220px">
+        {% csrf_token %}<input type="hidden" name="acao" value="preco">
+        <input name="preco" inputmode="decimal" aria-label="Novo preço de {{ produto.nome }}" placeholder="Novo preço" required>
+        <button>Alterar preço</button>
+      </form>
+      <form method="post" action="/produtos/{{ produto.pk }}/" style="flex:0 0 auto">
+        {% csrf_token %}
+        {% if produto.ativo %}<button name="acao" value="inativar">Inativar</button>
+        {% else %}<button name="acao" value="reativar">Reativar</button>{% endif %}
+      </form>
+    </div>
   </li>
   {% empty %}
   <li class="suave">Nenhum produto cadastrado.</li>

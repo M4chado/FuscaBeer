@@ -94,6 +94,14 @@ Funcionalidade: Registro de venda com forma de pagamento
     Então a lista de produtos não mostra "Refrigerante lata"
     E o sistema recusa uma venda enviada com "Refrigerante lata" com a mensagem "Produto inativo"
 
+  # ---------- Histórico ----------
+
+  Cenário: CA-11 Alteração de preço não muda venda confirmada
+    Dado que o operador confirmou uma venda de 1 "Chopp 300 ml" em "Pix"
+    Quando o operador altera o preço de "Chopp 300 ml" para R$ 9,00
+    Então a venda já confirmada continua mostrando total de R$ 8,00
+    E uma venda nova de 1 "Chopp 300 ml" mostra total de R$ 9,00
+
   # ---------- Produtos ----------
 
   Cenário: CA-18 Nome de produto repetido

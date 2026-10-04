@@ -4,9 +4,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_http_methods
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from .models import ItemVenda, Produto, Venda
 from .regras import (
@@ -185,3 +185,30 @@ def cadastrar_produto(request):
 @require_http_methods(["GET", "POST"])
 def produtos(request):
     return cadastrar_produto(request) if request.method == "POST" else tela_produtos(request)
+
+
+@login_required
+@require_POST
+def produto(request, pk):
+    """POST /produtos/{id}/: altera o preço, inativa ou reativa (escopo 1)."""
+    produto = get_object_or_404(Produto, pk=pk)
+    acao = request.POST.get("acao")
+    if acao == "preco":
+        preco = para_centavos(request.POST.get("preco", ""))
+        if not preco_valido(preco):
+            return tela_produtos(request, [MSG_PRECO], status=422)
+        produto.preco_centavos = preco
+        mensagem = f"Preço de {produto.nome} alterado."
+    elif acao == "inativar":
+        produto.ativo = False
+        mensagem = f"{produto.nome} inativado."
+    elif acao == "reativar":
+        if nome_em_uso(produto.nome, exceto=produto.pk):
+            return tela_produtos(request, [MSG_NOME_EM_USO], status=422)  # RN-13
+        produto.ativo = True
+        mensagem = f"{produto.nome} reativado."
+    else:
+        return tela_produtos(request, ["Escolha uma ação"], status=422)
+    produto.save()
+    messages.success(request, mensagem)
+    return redirect("/produtos/")

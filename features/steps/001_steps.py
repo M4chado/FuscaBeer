@@ -247,6 +247,51 @@ def step_recusa_produto(context, nome, mensagem):
     assert contar_vendas_do_dia(context) == antes
 
 
+# ---------- Histórico ----------
+
+
+def registrar_pela_tela(context, quantidade, nome, forma):
+    """Faz uma venda inteira pela tela e devolve a linha dela na lista do dia."""
+    context.montagem = None
+    adicionar(context, quantidade, nome)
+    context.forma = forma
+    step_confirma(context)
+    assert context.resposta.status_code == 200, context.resposta.status_code
+    context.venda = vendas_na_lista(context.resposta)[0]
+    return context.venda
+
+
+def venda_na_lista(context, url="/vendas/"):
+    linhas = vendas_na_lista(context.test.client.get(url))
+    return next((v for v in linhas if v["id"] == context.venda["id"]), None)
+
+
+@given('que o operador confirmou uma venda de {quantidade:d} "{nome:Nome}" em "{forma}"')
+def step_confirmou_venda(context, quantidade, nome, forma):
+    registrar_pela_tela(context, quantidade, nome, forma)
+
+
+@when('o operador altera o preço de "{nome:Nome}" para R$ {preco}')
+def step_altera_preco(context, nome, preco):
+    tela = pagina(context.test.client.get("/produtos/"))
+    linha = next(li for li in tela.select(".produto") if li.select_one(".nome").text == nome)
+    acao = linha.select_one("form.alterar-preco")["action"]
+    context.resposta = context.test.client.post(acao, {"acao": "preco", "preco": preco})
+    assert context.resposta.status_code == 302, context.resposta.status_code
+
+
+@then("a venda já confirmada continua mostrando total de R$ {total}")
+def step_venda_mantem_total(context, total):
+    venda = venda_na_lista(context)
+    assert venda and venda["total"] == f"R$ {total}", venda
+
+
+@then('uma venda nova de {quantidade:d} "{nome:Nome}" mostra total de R$ {total}')
+def step_venda_nova_total(context, quantidade, nome, total):
+    venda = registrar_pela_tela(context, quantidade, nome, "Pix")
+    assert venda["total"] == f"R$ {total}", venda
+
+
 # ---------- Acesso ----------
 
 
