@@ -102,6 +102,30 @@ Funcionalidade: Registro de venda com forma de pagamento
     Então a venda já confirmada continua mostrando total de R$ 8,00
     E uma venda nova de 1 "Chopp 300 ml" mostra total de R$ 9,00
 
+  # ---------- Consulta do dia ----------
+
+  Cenário: CA-12 Totais do dia por forma de pagamento
+    Dado que no dia de operação 01/10/2026 o operador confirmou as vendas:
+      | itens                                | forma    |
+      | 2 Chopp 300 ml e 1 Água 500 ml       | Pix      |
+      | 3 Cerveja lata 350 ml                | Dinheiro |
+      | 1 Chopp 300 ml                       | Crédito  |
+      | 1 Cerveja lata 350 ml                | Pix      |
+    Quando o operador consulta o dia de operação 01/10/2026
+    Então a tela mostra 4 vendas e total geral de R$ 52,00
+    E a tela mostra os totais por forma de pagamento:
+      | forma    | total |
+      | Dinheiro | 18,00 |
+      | Débito   | 0,00  |
+      | Crédito  | 8,00  |
+      | Pix      | 26,00 |
+
+  Cenário: CA-13 Venda depois da meia-noite pertence ao dia anterior
+    Dado que o operador confirmou uma venda de 1 "Chopp 300 ml" em "Pix" às 01:30 de 02/10/2026
+    Quando o operador consulta o dia de operação 01/10/2026
+    Então essa venda aparece na lista
+    E ela não aparece na consulta do dia de operação 02/10/2026
+
   # ---------- Produtos ----------
 
   Cenário: CA-18 Nome de produto repetido

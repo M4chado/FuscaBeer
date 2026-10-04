@@ -1,3 +1,7 @@
+from datetime import datetime
+from unittest import mock
+from zoneinfo import ZoneInfo
+
 from behave import given, register_type, then, when
 from bs4 import BeautifulSoup
 from django.contrib.auth import get_user_model
@@ -250,11 +254,19 @@ def step_recusa_produto(context, nome, mensagem):
 # ---------- Histórico ----------
 
 
-def registrar_pela_tela(context, quantidade, nome, forma):
-    """Faz uma venda inteira pela tela e devolve a linha dela na lista do dia."""
+def registrar_pela_tela(context, itens, forma):
+    """Faz uma venda inteira pela tela e devolve a linha dela na lista do dia.
+
+    Em dinheiro, o cliente paga o valor exato (o total que a montagem mostra).
+    """
     context.montagem = None
-    adicionar(context, quantidade, nome)
+    for quantidade, nome in itens:
+        adicionar(context, quantidade, nome)
     context.forma = forma
+    context.valor_recebido = ""
+    if forma == "Dinheiro":
+        total = montagem(context).select_one(".montagem .total").get_text(strip=True)
+        context.valor_recebido = total.removeprefix("R$ ")
     step_confirma(context)
     assert context.resposta.status_code == 200, context.resposta.status_code
     context.venda = vendas_na_lista(context.resposta)[0]
@@ -268,7 +280,7 @@ def venda_na_lista(context, url="/vendas/"):
 
 @given('que o operador confirmou uma venda de {quantidade:d} "{nome:Nome}" em "{forma}"')
 def step_confirmou_venda(context, quantidade, nome, forma):
-    registrar_pela_tela(context, quantidade, nome, forma)
+    registrar_pela_tela(context, [(quantidade, nome)], forma)
 
 
 @when('o operador altera o preço de "{nome:Nome}" para R$ {preco}')
@@ -288,7 +300,7 @@ def step_venda_mantem_total(context, total):
 
 @then('uma venda nova de {quantidade:d} "{nome:Nome}" mostra total de R$ {total}')
 def step_venda_nova_total(context, quantidade, nome, total):
-    venda = registrar_pela_tela(context, quantidade, nome, "Pix")
+    venda = registrar_pela_tela(context, [(quantidade, nome)], "Pix")
     assert venda["total"] == f"R$ {total}", venda
 
 
@@ -344,6 +356,96 @@ def step_lista_produtos_sem(context, nome):
     nomes = nomes_de_produto(context.resposta)
     assert nomes, "a tela não tem lista de produtos"
     assert nome not in nomes, nomes
+
+
+# ---------- Consulta do dia ----------
+
+BRASILIA = ZoneInfo("America/Sao_Paulo")
+
+
+def acertar_relogio(context, momento):
+    """Fixa timezone.now() no momento dado até o fim do cenário."""
+    if getattr(context, "relogio", None) is None:
+        patcher = mock.patch("django.utils.timezone.now")
+        context.relogio = patcher.start()
+        context.add_cleanup(patcher.stop)
+    context.relogio.return_value = momento
+
+
+def em_brasilia(data, hora="20:00"):
+    return datetime.strptime(f"{data} {hora}", "%d/%m/%Y %H:%M").replace(tzinfo=BRASILIA)
+
+
+def url_do_dia(data):
+    return "/vendas/?dia=" + datetime.strptime(data, "%d/%m/%Y").strftime("%Y-%m-%d")
+
+
+def ler_itens_da_tabela(texto_itens):
+    """'2 Chopp 300 ml e 1 Água 500 ml' → [(2, 'Chopp 300 ml'), (1, 'Água 500 ml')]"""
+    itens = []
+    for parte in texto_itens.split(" e "):
+        quantidade, nome = parte.strip().split(" ", 1)
+        itens.append((int(quantidade), nome))
+    return itens
+
+
+@given("que no dia de operação {data} o operador confirmou as vendas:")
+def step_vendas_do_dia(context, data):
+    for minuto, linha in enumerate(context.table):
+        acertar_relogio(context, em_brasilia(data, f"20:{minuto:02d}"))
+        context.vendas = getattr(context, "vendas", [])
+        context.vendas.append(
+            registrar_pela_tela(context, ler_itens_da_tabela(linha["itens"]), linha["forma"])
+        )
+
+
+@given(
+    'que o operador confirmou uma venda de {quantidade:d} "{nome:Nome}" em "{forma}" '
+    "às {hora} de {data}"
+)
+def step_venda_em_horario(context, quantidade, nome, forma, hora, data):
+    acertar_relogio(context, em_brasilia(data, hora))
+    registrar_pela_tela(context, [(quantidade, nome)], forma)
+
+
+@when("o operador consulta o dia de operação {data}")
+def step_consulta_dia(context, data):
+    context.resposta = context.test.client.get(url_do_dia(data))
+    assert context.resposta.status_code == 200, context.resposta.status_code
+
+
+@then("a tela mostra {quantidade:d} vendas e total geral de R$ {total}")
+def step_resumo_do_dia(context, quantidade, total):
+    tela = pagina(context.resposta)
+    resumo = (tela.select_one(".qtd-vendas").text, tela.select_one(".total-geral").text)
+    assert resumo == (str(quantidade), f"R$ {total}"), resumo
+
+
+def totais_por_forma(resposta):
+    return {
+        linha.select_one("th").get_text(strip=True): linha.select_one("td").get_text(strip=True)
+        for linha in pagina(resposta).select("#totais-por-forma tbody tr")
+    }
+
+
+@then("a tela mostra os totais por forma de pagamento:")
+def step_totais_por_forma(context):
+    esperado = {linha["forma"]: f"R$ {linha['total']}" for linha in context.table}
+    assert totais_por_forma(context.resposta) == esperado, totais_por_forma(context.resposta)
+
+
+@then("essa venda aparece na lista")
+def step_venda_aparece(context):
+    ids = [v["id"] for v in vendas_na_lista(context.resposta)]
+    assert context.venda["id"] in ids, ids
+
+
+@then("ela não aparece na consulta do dia de operação {data}")
+def step_venda_nao_aparece(context, data):
+    resposta = context.test.client.get(url_do_dia(data))
+    assert resposta.status_code == 200, resposta.status_code
+    ids = [v["id"] for v in vendas_na_lista(resposta)]
+    assert context.venda["id"] not in ids, ids
 
 
 # ---------- Produtos ----------

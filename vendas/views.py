@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -11,18 +11,14 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 from .models import ItemVenda, Produto, Venda
 from .regras import (
     calcular_total,
+    dia_operacao,
     formatar_reais,
     ler_itens,
     para_centavos,
     preco_valido,
+    totais_do_dia,
     validar_pagamento,
 )
-
-
-def dia_operacao(momento):
-    """RN-11: o dia de operação começa às 06:00."""
-    return (timezone.localtime(momento) - timedelta(hours=6)).date()
-
 
 MSG_QUANTIDADE = "Informe uma quantidade de 1 a 99"
 MSG_INATIVO = "Produto inativo"
@@ -131,14 +127,36 @@ def registrar(request):
     return redirect("/vendas/")
 
 
-def listar(request):
-    dia = dia_operacao(timezone.now())
-    vendas = (
+MSG_DIA = "Informe o dia no formato AAAA-MM-DD"
+
+
+def tela_do_dia(request, dia, erros=(), status=200):
+    """RN-14: resumo e lista de um dia de operação, da venda mais recente para a mais antiga."""
+    vendas = list(
         Venda.objects.filter(dia_operacao=dia)
         .annotate(qtd_itens=Count("itens"))
         .order_by("-criada_em", "-pk")
     )
-    return render(request, "vendas/lista.html", {"vendas": vendas, "dia": dia})
+    contexto = {
+        "dia": dia,
+        "hoje": dia_operacao(timezone.now()),
+        "vendas": vendas,
+        "resumo": totais_do_dia([(v.forma, v.total_centavos) for v in vendas]),
+        "erros": erros,
+    }
+    return render(request, "vendas/lista.html", contexto, status=status)
+
+
+def listar(request):
+    hoje = dia_operacao(timezone.now())
+    texto_dia = request.GET.get("dia")
+    if texto_dia is None:
+        return tela_do_dia(request, hoje)
+    try:
+        dia = date.fromisoformat(texto_dia)
+    except ValueError:
+        return tela_do_dia(request, hoje, [MSG_DIA], status=422)
+    return tela_do_dia(request, dia)
 
 
 @login_required

@@ -1,4 +1,6 @@
 import re
+from datetime import timedelta
+from zoneinfo import ZoneInfo
 
 PRECO_MINIMO = 1  # RN-12: R$ 0,01
 PRECO_MAXIMO = 99999  # RN-12: R$ 999,99
@@ -74,3 +76,21 @@ def validar_pagamento(forma, total, recebido_texto):
     if recebido < total:
         return None, None, MSG_RECEBIDO_MENOR
     return recebido, calcular_troco(total, recebido), None
+
+
+BRASILIA = ZoneInfo("America/Sao_Paulo")
+FORMAS = (DINHEIRO, "Débito", "Crédito", "Pix")
+
+
+def dia_operacao(momento):
+    """RN-11: o dia de operação vai das 06:00 às 05:59:59 do dia seguinte, em Brasília."""
+    return (momento.astimezone(BRASILIA) - timedelta(hours=6)).date()
+
+
+def totais_do_dia(vendas):
+    """RN-14: recebe [(forma, total)] das vendas confirmadas e devolve quantidade, total geral
+    e o total de cada uma das quatro formas (zero quando a forma não teve venda)."""
+    por_forma = dict.fromkeys(FORMAS, 0)
+    for forma, total in vendas:
+        por_forma[forma] += total
+    return {"quantidade": len(vendas), "total": sum(por_forma.values()), "por_forma": por_forma}

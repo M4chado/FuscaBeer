@@ -1,12 +1,17 @@
+from datetime import UTC, date, datetime
+
 import pytest
 
 from vendas.regras import (
+    BRASILIA,
     calcular_total,
     calcular_troco,
+    dia_operacao,
     formatar_reais,
     ler_itens,
     para_centavos,
     preco_valido,
+    totais_do_dia,
     validar_pagamento,
 )
 
@@ -90,3 +95,27 @@ def test_tabela_de_exemplos_rn07(total, forma, recebido, esperado):
 @pytest.mark.parametrize("forma", ["Débito", "Crédito", "Pix"])
 def test_cartao_e_pix_sem_valor_recebido_nao_tem_troco(forma):
     assert validar_pagamento(forma, 800, "") == (None, None, None)
+
+
+@pytest.mark.parametrize(
+    ("momento", "dia"),
+    [
+        (datetime(2026, 10, 1, 6, 0, tzinfo=BRASILIA), date(2026, 10, 1)),
+        (datetime(2026, 10, 1, 23, 59, tzinfo=BRASILIA), date(2026, 10, 1)),
+        (datetime(2026, 10, 2, 1, 30, tzinfo=BRASILIA), date(2026, 10, 1)),
+        (datetime(2026, 10, 2, 5, 59, 59, tzinfo=BRASILIA), date(2026, 10, 1)),
+        (datetime(2026, 10, 2, 6, 0, tzinfo=BRASILIA), date(2026, 10, 2)),
+        (datetime(2026, 10, 2, 4, 30, tzinfo=UTC), date(2026, 10, 1)),  # 01:30 em Brasília
+    ],
+)
+def test_dia_de_operacao_comeca_as_seis(momento, dia):
+    assert dia_operacao(momento) == dia
+
+
+def test_totais_do_dia_por_forma():
+    vendas = [("Pix", 2000), ("Dinheiro", 1800), ("Crédito", 800), ("Pix", 600)]
+    assert totais_do_dia(vendas) == {
+        "quantidade": 4,
+        "total": 5200,
+        "por_forma": {"Dinheiro": 1800, "Débito": 0, "Crédito": 800, "Pix": 2600},
+    }

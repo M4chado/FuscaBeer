@@ -2,7 +2,27 @@
 {% load reais %}
 {% block titulo %}Vendas do dia{% endblock %}
 {% block conteudo %}
-<h1>Vendas do dia {{ dia|date:"d/m/Y" }}</h1>
+<h1>Vendas do dia de operação {{ dia|date:"d/m/Y" }}</h1>
+<form method="get" action="/vendas/" class="linha" style="margin-bottom:12px">
+  <div><label for="dia">Dia de operação</label>
+    <input id="dia" name="dia" type="date" value="{{ dia|date:'Y-m-d' }}"></div>
+  <div style="flex:0 0 auto"><button>Consultar</button></div>
+  {% if dia != hoje %}<div style="flex:0 0 auto"><a class="botao" href="/vendas/">Hoje</a></div>{% endif %}
+</form>
+
+<section class="cartao resumo">
+  <p style="margin-top:0"><span class="qtd-vendas">{{ resumo.quantidade }}</span> venda{{ resumo.quantidade|pluralize }}
+    · total geral <strong class="total-geral">{{ resumo.total|reais }}</strong></p>
+  <table id="totais-por-forma">
+    <tbody>
+      {% for forma, total in resumo.por_forma.items %}
+      <tr><th>{{ forma }}</th><td class="num">{{ total|reais }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="suave" style="margin-bottom:0">O dia de operação vai das 06:00 às 05:59 do dia seguinte.</p>
+</section>
+
 <p><a class="botao primario largo" href="/vendas/nova/">Nova venda</a></p>
 
 <ul class="vendas" style="list-style:none;padding:0">
