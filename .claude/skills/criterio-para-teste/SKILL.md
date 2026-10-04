@@ -15,5 +15,5 @@ Um critério por vez. O texto do critério na spec é a fonte da verdade.
    `python manage.py behave features/NNN-<feature>.feature --name "CA-xx"`
    Se passar antes de existir implementação, o teste não testa nada: revise o passo antes de seguir.
 6. Implemente o mínimo para o cenário passar. Se o critério depende de uma regra de cálculo (total, troco, totais do dia), escreva também o teste de unidade em `tests/test_<regra>.py`.
-7. Rode a prova completa: o cenário do passo 5, `pytest` e `ruff check .`.
-8. **Pare.** Mostre a saída dos três comandos, liste os arquivos alterados e sugira a mensagem de commit no formato `feat(NNN): <o que mudou> (CA-xx)`. Não faça commit e não comece outro critério sem pedido.
+7. Rode a prova completa, que é a mesma do `AGENTS.md` ("Como testar"): `ruff check . && ruff format --check .`, `pytest`, `python manage.py behave` (todos os cenários, não só o do passo 5) e `python manage.py makemigrations --check --dry-run`.
+8. **Pare.** Mostre a saída dos quatro comandos, liste os arquivos alterados e sugira a mensagem de commit no formato `feat(NNN): <o que mudou> (CA-xx)`. Não faça commit e não comece outro critério sem pedido.

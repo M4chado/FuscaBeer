@@ -23,7 +23,9 @@ Depois de entrar: cadastre os produtos em **Produtos** e registre vendas em **No
 ruff check . && ruff format --check .   # lint e formatação
 pytest                                  # testes de unidade em tests/
 python manage.py behave                 # critérios de aceite em features/
+python manage.py makemigrations --check --dry-run   # modelos e migrações em sincronia
 ```
+Esta é a única definição de pronto: os quatro comandos passando. A skill e o CLAUDE.md apontam para cá.
 
 ## Estrutura
 - `config/` configuração do Django · `tests/` pytest · `features/` cenários Gherkin (`# language: pt`)
