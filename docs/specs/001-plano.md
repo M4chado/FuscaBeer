@@ -47,3 +47,20 @@ Cada uma é uma leitura da spec; nenhuma muda comportamento descrito nela. Se a 
 | S-06 | Ordem das recusas no cancelamento | 404 (venda não existe) → 409 já cancelada → 409 outro dia → 422 motivo. Por isso o CA-17 mostra "Esta venda já está cancelada" mesmo que o motivo seja válido. |
 | S-07 | RN-15 "tela de login" | Um único login (D-04), criado com `python manage.py createsuperuser`. |
 | S-08 | Cancelar a partir da lista | O botão de cancelar aparece só em venda Confirmada do dia corrente; a rota recusa as demais mesmo se chamada direto (CA-16). |
+
+## Spec depois da implementação
+
+**A implementação não mudou nenhum comportamento da spec 001.** Os 20 critérios de aceite estão em `features/001-registro-de-venda.feature`, copiados sem mudar uma palavra, e passam. Nenhuma regra, mensagem, rota ou código de resposta da seção 7 foi alterado. Por isso `docs/specs/001-registro-de-venda.md` não foi editada.
+
+O que a implementação precisou decidir e a spec não diz está nas suposições S-01 a S-08 acima. Proposta para a equipe aprovar e levar à spec como decisões novas (por pull request, como pede a seção 7):
+
+| Proposta | Origem | Onde entraria na spec |
+|---|---|---|
+| D-21: "itens" de uma venda são as linhas (Item da venda), não as unidades | S-01 | Seção 4, Venda › itens |
+| D-22: a montagem da venda volta ao servidor por `GET /vendas/nova/?item=<id>:<qtd>&produto=<id>&quantidade=<n>` | S-02 | Seção 7, tabela de rotas |
+| D-23: `GET /login/` e `POST /logout/` na tabela de rotas | S-07 | Seção 7, tabela de rotas |
+| D-24: valores digitados no formato brasileiro (ponto de milhar, vírgula decimal) | S-03 | Seção 7, Padrões |
+| D-25: soma acima de 99 recusada com "Informe uma quantidade de 1 a 99" | S-04 | RN-02 |
+| D-26: motivo fora de 3 a 200 caracteres recebe "Informe o motivo do cancelamento"; recusa por estado vem antes da recusa por motivo | S-05, S-06 | RN-10 |
+
+Continuam em aberto, como a própria spec já dizia: confirmar com o Gilmar o horário de corte do dia de operação (D-01) e a estabilidade do sinal no balcão (D-16).

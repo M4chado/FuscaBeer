@@ -13,8 +13,10 @@ python3.13 -m venv .venv
 source .venv/bin/activate         # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py runserver        # http://localhost:8000
+python manage.py createsuperuser  # o login único do operador (D-04); pede usuário e senha
+python manage.py runserver        # http://localhost:8000 → entre com esse login
 ```
+Depois de entrar: cadastre os produtos em **Produtos** e registre vendas em **Nova venda**.
 
 ## Como testar (passa antes de todo commit)
 ```bash
@@ -25,6 +27,8 @@ python manage.py behave                 # critérios de aceite em features/
 
 ## Estrutura
 - `config/` configuração do Django · `tests/` pytest · `features/` cenários Gherkin (`# language: pt`)
+- `templates/` base das telas e login · `static/js/` HTMX vendorizado (não baixa nada da internet)
+- `vendas/regras.py` cálculos puros (total, troco, dia de operação, totais) · `vendas/views.py` rotas da seção 7 da spec
 - `docs/specs/` specs das features (fonte da verdade) · `docs/harness/` relatórios e evidências do harness
 - Cada app de feature fica na raiz (ex.: `vendas/`), criado quando a spec dela for implementada.
 
