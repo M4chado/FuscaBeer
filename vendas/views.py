@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Count
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
@@ -74,18 +75,36 @@ def nova(request):
     return tela_nova(request, itens, {}, erros, status=422 if erros else 200)
 
 
+MSG_SEM_ITENS = "Adicione pelo menos um produto"
+MSG_FORMA = "Escolha a forma de pagamento"
+
+
 def registrar(request):
+    """POST /vendas/: valida tudo antes de gravar; venda e itens entram juntos ou nada entra."""
+    erros = []
     itens = ler_itens(request.POST.getlist("item"))
-    forma = request.POST["forma"]
-    agora = timezone.now()
+    if itens is None:
+        erros.append(MSG_QUANTIDADE)
+        itens = []
+    elif not itens:
+        erros.append(MSG_SEM_ITENS)
     linhas = montar_linhas(itens)
+    if len(linhas) < len(itens) or any(not linha["produto"].ativo for linha in linhas):
+        erros.append(MSG_INATIVO)  # RN-03
+    forma = request.POST.get("forma", "")
+    if forma not in dict(Venda.FORMAS):
+        erros.append(MSG_FORMA)  # RN-06
+    recebido = troco = None
     total = calcular_total(
         (linha["quantidade"], linha["produto"].preco_centavos) for linha in linhas
     )
-    recebido = troco = None
     if forma == Venda.DINHEIRO:
         recebido = para_centavos(request.POST["valor_recebido"])
         troco = calcular_troco(total, recebido)
+    if erros:
+        return tela_nova(request, itens, request.POST, erros, status=422)
+
+    agora = timezone.now()
     with transaction.atomic():
         venda = Venda.objects.create(
             criada_em=agora,
@@ -95,15 +114,17 @@ def registrar(request):
             recebido_centavos=recebido,
             troco_centavos=troco,
         )
-        for linha in linhas:
-            ItemVenda.objects.create(
+        ItemVenda.objects.bulk_create(
+            ItemVenda(
                 venda=venda,
                 produto=linha["produto"],
-                nome=linha["produto"].nome,
+                nome=linha["produto"].nome,  # RN-04: cópia do nome e do preço
                 quantidade=linha["quantidade"],
                 preco_unitario_centavos=linha["produto"].preco_centavos,
                 subtotal_centavos=linha["subtotal"],
             )
+            for linha in linhas
+        )
     if troco is not None:
         messages.success(request, f"Troco: R$ {formatar_reais(troco)}")
     return redirect("/vendas/")
@@ -111,11 +132,12 @@ def registrar(request):
 
 def listar(request):
     dia = dia_operacao(timezone.now())
-    vendas = [
-        {"total": formatar_reais(v.total_centavos), "forma": v.forma}
-        for v in Venda.objects.filter(dia_operacao=dia).order_by("-criada_em")
-    ]
-    return render(request, "vendas/lista.html", {"vendas": vendas})
+    vendas = (
+        Venda.objects.filter(dia_operacao=dia)
+        .annotate(qtd_itens=Count("itens"))
+        .order_by("-criada_em", "-pk")
+    )
+    return render(request, "vendas/lista.html", {"vendas": vendas, "dia": dia})
 
 
 @login_required

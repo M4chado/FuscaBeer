@@ -11,6 +11,15 @@ Funcionalidade: Registro de venda com forma de pagamento
       | Água 500 ml         | 4,00  | Ativo    |
       | Refrigerante lata   | 5,00  | Inativo  |
 
+  # ---------- Registro ----------
+
+  Cenário: CA-01 Venda com dois produtos paga no Pix
+    Quando o operador adiciona 2 "Chopp 300 ml" e 1 "Água 500 ml"
+    E escolhe a forma de pagamento "Pix"
+    E confirma a venda
+    Então a lista do dia mostra uma venda de R$ 20,00 em "Pix" com 2 itens
+    E essa venda não mostra valor recebido nem troco
+
   Cenário: CA-02 Venda em dinheiro com troco
     Quando o operador adiciona 3 "Cerveja lata 350 ml"
     E escolhe a forma de pagamento "Dinheiro"
@@ -19,12 +28,30 @@ Funcionalidade: Registro de venda com forma de pagamento
     Então a tela mostra o troco de R$ 2,00
     E a lista do dia mostra uma venda de R$ 18,00 em "Dinheiro"
 
+  Esquema do Cenário: CA-03 Venda em cartão ou Pix sem valor recebido
+    Quando o operador adiciona 1 "Chopp 300 ml"
+    E escolhe a forma de pagamento "<forma>"
+    E confirma a venda
+    Então a lista do dia mostra uma venda de R$ 8,00 em "<forma>"
+
+    Exemplos:
+      | forma   |
+      | Débito  |
+      | Crédito |
+      | Pix     |
+
   Cenário: CA-04 Mesmo produto adicionado duas vezes
     Quando o operador adiciona 2 "Chopp 300 ml"
     E adiciona mais 1 "Chopp 300 ml"
     Então a venda em montagem mostra 1 linha "Chopp 300 ml" com quantidade 3 e subtotal R$ 24,00
 
   # ---------- Recusas ----------
+
+  Cenário: CA-07 Venda sem itens
+    Quando o operador escolhe a forma de pagamento "Pix"
+    E confirma a venda sem adicionar produto
+    Então a tela mostra a mensagem "Adicione pelo menos um produto"
+    E a lista do dia não mostra venda nova
 
   Esquema do Cenário: CA-08 Quantidade fora do limite
     Quando o operador tenta adicionar <qtd> "Chopp 300 ml"
@@ -36,6 +63,17 @@ Funcionalidade: Registro de venda com forma de pagamento
       | 0   |
       | -1  |
       | 100 |
+
+  Cenário: CA-09 Venda sem forma de pagamento
+    Quando o operador adiciona 1 "Chopp 300 ml"
+    E confirma a venda sem escolher a forma de pagamento
+    Então a tela mostra a mensagem "Escolha a forma de pagamento"
+    E a lista do dia não mostra venda nova
+
+  Cenário: CA-10 Produto inativo fora da venda
+    Quando o operador abre a tela de nova venda
+    Então a lista de produtos não mostra "Refrigerante lata"
+    E o sistema recusa uma venda enviada com "Refrigerante lata" com a mensagem "Produto inativo"
 
   # ---------- Produtos ----------
 

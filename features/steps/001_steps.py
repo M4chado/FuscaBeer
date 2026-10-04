@@ -129,14 +129,49 @@ def step_valor_recebido(context, valor):
     context.valor_recebido = valor
 
 
+def vendas_na_lista(resposta):
+    """Linhas da lista do dia como o operador as lê."""
+    linhas = []
+    for linha in pagina(resposta).select(".venda"):
+        campos = {
+            campo: linha.select_one(f".{campo}").get_text(" ", strip=True)
+            for campo in ("total", "forma", "itens", "recebido", "troco", "situacao")
+            if linha.select_one(f".{campo}")
+        }
+        linhas.append({"id": linha["id"], **campos})
+    return linhas
+
+
+def contar_vendas_do_dia(context):
+    return len(vendas_na_lista(context.test.client.get("/vendas/")))
+
+
+def confirmar(context, dados):
+    context.vendas_antes = contar_vendas_do_dia(context)
+    context.resposta = context.test.client.post("/vendas/", dados, follow=True)
+
+
 @when("confirma a venda")
+@when("confirma a venda sem adicionar produto")
+@when("confirma a venda sem escolher a forma de pagamento")
 def step_confirma(context):
     dados = {
         "item": itens_ocultos(montagem(context)),
         "forma": getattr(context, "forma", ""),
         "valor_recebido": getattr(context, "valor_recebido", ""),
     }
-    context.resposta = context.test.client.post("/vendas/", dados, follow=True)
+    confirmar(context, dados)
+
+
+@when('o operador escolhe a forma de pagamento "{forma}"')
+def step_operador_forma(context, forma):
+    context.forma = forma
+
+
+@when("o operador abre a tela de nova venda")
+def step_abre_nova(context):
+    context.resposta = context.test.client.get("/vendas/nova/")
+    context.montagem = pagina(context.resposta)
 
 
 @then("a tela mostra o troco de R$ {valor}")
@@ -144,9 +179,44 @@ def step_mostra_troco(context, valor):
     assert f"Troco: R$ {valor}" in texto(context.resposta), texto(context.resposta)
 
 
+def achar_venda(context, total, forma):
+    linhas = vendas_na_lista(context.resposta)
+    achadas = [v for v in linhas if v["total"] == f"R$ {total}" and v["forma"] == forma]
+    assert achadas, linhas
+    context.venda = achadas[0]  # a mais recente: a lista vem da mais nova para a mais antiga
+    return context.venda
+
+
 @then('a lista do dia mostra uma venda de R$ {total} em "{forma}"')
 def step_lista_do_dia(context, total, forma):
-    assert f"R$ {total} em {forma}" in texto(context.resposta), texto(context.resposta)
+    achar_venda(context, total, forma)
+
+
+@then('a lista do dia mostra uma venda de R$ {total} em "{forma}" com {itens:d} itens')
+def step_lista_do_dia_itens(context, total, forma, itens):
+    venda = achar_venda(context, total, forma)
+    assert venda["itens"] == f"{itens} itens", venda
+
+
+@then("essa venda não mostra valor recebido nem troco")
+def step_sem_recebido_troco(context):
+    assert "recebido" not in context.venda and "troco" not in context.venda, context.venda
+
+
+@then("a lista do dia não mostra venda nova")
+def step_sem_venda_nova(context):
+    assert contar_vendas_do_dia(context) == context.vendas_antes
+
+
+@then('o sistema recusa uma venda enviada com "{nome:Nome}" com a mensagem "{mensagem}"')
+def step_recusa_produto(context, nome, mensagem):
+    produto = Produto.objects.get(nome=nome)
+    antes = contar_vendas_do_dia(context)
+    resposta = context.test.client.post("/vendas/", {"item": f"{produto.pk}:1", "forma": "Pix"})
+    assert resposta.status_code == 422, resposta.status_code
+    context.resposta = resposta
+    step_mostra_mensagem(context, mensagem)
+    assert contar_vendas_do_dia(context) == antes
 
 
 # ---------- Acesso ----------
@@ -174,8 +244,7 @@ def step_nao_registra(context):
     assert envio.status_code == 302, envio.status_code
     assert envio["Location"].startswith("/login/"), envio["Location"]
     entrar_como_operador(context)
-    lista = pagina(context.test.client.get("/vendas/"))
-    assert not lista.select(".venda"), lista.get_text(" ")
+    assert contar_vendas_do_dia(context) == 0
 
 
 # ---------- Mensagens e lista de produtos (tela atual) ----------
