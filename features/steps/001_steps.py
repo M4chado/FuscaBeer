@@ -163,6 +163,34 @@ def step_confirma(context):
     confirmar(context, dados)
 
 
+@when('informa o valor recebido "{recebido}"')
+def step_valor_recebido_texto(context, recebido):
+    context.valor_recebido = "" if recebido == "(vazio)" else recebido
+
+
+@when(
+    'o operador envia uma venda de {quantidade:d} "{nome:Nome}" em "{forma}" '
+    "com valor recebido de R$ {valor}"
+)
+def step_envia_venda(context, quantidade, nome, forma, valor):
+    produto = Produto.objects.get(nome=nome)
+    dados = {"item": f"{produto.pk}:{quantidade}", "forma": forma, "valor_recebido": valor}
+    confirmar(context, dados)
+
+
+@then('o sistema recusa a venda com a mensagem "{mensagem}"')
+def step_recusa_venda(context, mensagem):
+    assert context.resposta.status_code == 422, context.resposta.status_code
+    step_mostra_mensagem(context, mensagem)
+
+
+@then('a venda em montagem continua com {quantidade:d} "{nome:Nome}"')
+def step_montagem_continua(context, quantidade, nome):
+    context.montagem = pagina(context.resposta)
+    linhas = [(linha["nome"], linha["quantidade"]) for linha in linhas_da_montagem(context)]
+    assert linhas == [(nome, str(quantidade))], linhas
+
+
 @when('o operador escolhe a forma de pagamento "{forma}"')
 def step_operador_forma(context, forma):
     context.forma = forma

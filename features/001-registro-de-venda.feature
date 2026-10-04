@@ -47,6 +47,25 @@ Funcionalidade: Registro de venda com forma de pagamento
 
   # ---------- Recusas ----------
 
+  Esquema do Cenário: CA-05 Valor recebido em dinheiro inválido
+    Quando o operador adiciona 3 "Cerveja lata 350 ml"
+    E escolhe a forma de pagamento "Dinheiro"
+    E informa o valor recebido "<recebido>"
+    E confirma a venda
+    Então a tela mostra a mensagem "<mensagem>"
+    E a venda em montagem continua com 3 "Cerveja lata 350 ml"
+    E a lista do dia não mostra venda nova
+
+    Exemplos:
+      | recebido | mensagem                                  |
+      | 17,99    | Valor recebido menor que o total da venda |
+      | (vazio)  | Informe o valor recebido                  |
+
+  Cenário: CA-06 Valor recebido em pagamento que não é dinheiro
+    Quando o operador envia uma venda de 1 "Chopp 300 ml" em "Pix" com valor recebido de R$ 20,00
+    Então o sistema recusa a venda com a mensagem "Valor recebido só vale para pagamento em dinheiro"
+    E a lista do dia não mostra venda nova
+
   Cenário: CA-07 Venda sem itens
     Quando o operador escolhe a forma de pagamento "Pix"
     E confirma a venda sem adicionar produto

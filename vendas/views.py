@@ -11,11 +11,11 @@ from django.views.decorators.http import require_GET, require_http_methods
 from .models import ItemVenda, Produto, Venda
 from .regras import (
     calcular_total,
-    calcular_troco,
     formatar_reais,
     ler_itens,
     para_centavos,
     preco_valido,
+    validar_pagamento,
 )
 
 
@@ -94,13 +94,14 @@ def registrar(request):
     forma = request.POST.get("forma", "")
     if forma not in dict(Venda.FORMAS):
         erros.append(MSG_FORMA)  # RN-06
-    recebido = troco = None
     total = calcular_total(
         (linha["quantidade"], linha["produto"].preco_centavos) for linha in linhas
     )
-    if forma == Venda.DINHEIRO:
-        recebido = para_centavos(request.POST["valor_recebido"])
-        troco = calcular_troco(total, recebido)
+    recebido, troco, recusa = validar_pagamento(
+        forma, total, request.POST.get("valor_recebido", "")
+    )
+    if recusa:
+        erros.append(recusa)  # RN-07, RN-08
     if erros:
         return tela_nova(request, itens, request.POST, erros, status=422)
 

@@ -53,3 +53,24 @@ def ler_itens(valores):
     if any(quantidade > QUANTIDADE_MAXIMA for quantidade in itens.values()):
         return None
     return list(itens.items())
+
+
+DINHEIRO = "Dinheiro"
+MSG_RECEBIDO_VAZIO = "Informe o valor recebido"
+MSG_RECEBIDO_MENOR = "Valor recebido menor que o total da venda"
+MSG_RECEBIDO_FORA_DO_DINHEIRO = "Valor recebido só vale para pagamento em dinheiro"
+
+
+def validar_pagamento(forma, total, recebido_texto):
+    """RN-07 e RN-08. Devolve (recebido, troco, mensagem de recusa ou None), em centavos."""
+    recebido_texto = recebido_texto.strip()
+    if forma != DINHEIRO:
+        if recebido_texto:
+            return None, None, MSG_RECEBIDO_FORA_DO_DINHEIRO
+        return None, None, None
+    recebido = para_centavos(recebido_texto)
+    if recebido is None:
+        return None, None, MSG_RECEBIDO_VAZIO
+    if recebido < total:
+        return None, None, MSG_RECEBIDO_MENOR
+    return recebido, calcular_troco(total, recebido), None

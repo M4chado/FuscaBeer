@@ -7,6 +7,7 @@ from vendas.regras import (
     ler_itens,
     para_centavos,
     preco_valido,
+    validar_pagamento,
 )
 
 
@@ -67,3 +68,25 @@ def test_quantidade_fora_de_1_a_99_e_recusada(valores):
 
 def test_limite_de_99_somado_e_aceito():
     assert ler_itens(["1:98", "1:1"]) == [(1, 99)]
+
+
+# Tabela de exemplos da RN-07 (spec 001), linha por linha.
+@pytest.mark.parametrize(
+    ("total", "forma", "recebido", "esperado"),
+    [
+        (1800, "Dinheiro", "20,00", (2000, 200, None)),
+        (1200, "Dinheiro", "50,00", (5000, 3800, None)),
+        (1800, "Dinheiro", "18,00", (1800, 0, None)),
+        (1800, "Dinheiro", "18,01", (1801, 1, None)),
+        (1800, "Dinheiro", "17,99", (None, None, "Valor recebido menor que o total da venda")),
+        (1800, "Dinheiro", "", (None, None, "Informe o valor recebido")),
+        (1800, "Pix", "20,00", (None, None, "Valor recebido só vale para pagamento em dinheiro")),
+    ],
+)
+def test_tabela_de_exemplos_rn07(total, forma, recebido, esperado):
+    assert validar_pagamento(forma, total, recebido) == esperado
+
+
+@pytest.mark.parametrize("forma", ["Débito", "Crédito", "Pix"])
+def test_cartao_e_pix_sem_valor_recebido_nao_tem_troco(forma):
+    assert validar_pagamento(forma, 800, "") == (None, None, None)
