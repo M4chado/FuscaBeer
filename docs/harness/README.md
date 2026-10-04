@@ -8,6 +8,7 @@ Harness usado pela equipe: **Claude Code**.
 | `achado-1.md` | O achado escolhido no primeiro relatório e o commit do reparo |
 | `relatorio-2.md` | Segundo relatório, depois da configuração (LAB 3, Aula 09) |
 | `evidencias.md` | Provas de que permissão, skill, hook e contexto funcionam, e a leitura da segunda medição |
+| `diario-001.md` | Diário do agente na primeira feature (spec 001): autonomia, erros, perguntas e mudanças no harness |
 
 ## O que foi configurado
 
