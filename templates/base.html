@@ -1,64 +1,245 @@
-{% load static %}<!doctype html>
+{% load static %}
+<!doctype html>
 <html lang="pt-br">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {# 422 e 409 trazem o formulário com a mensagem do critério: o HTMX troca a tela também nesses casos. #}
-  <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"409","swap":true},{"code":"[45]..","swap":false,"error":true}]}'>
+  <meta name="htmx-config"
+    content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"409","swap":true},{"code":"[45]..","swap":false,"error":true}]}'>
   <title>{% block titulo %}Fusca Beer{% endblock %} · Fusca Beer</title>
   <script src="{% static 'js/htmx-2.0.11.min.js' %}" defer></script>
   <style>
     :root {
-      --fundo: #f7f4ee; --cartao: #ffffff; --texto: #1f1a14; --suave: #6b6257;
-      --marca: #b4570b; --marca-texto: #ffffff; --borda: #ddd5c8;
-      --erro: #a1251b; --erro-fundo: #fbe9e7; --ok: #1d6b3a; --ok-fundo: #e6f4ea;
+      --fundo: #f7f4ee;
+      --cartao: #ffffff;
+      --texto: #1f1a14;
+      --suave: #6b6257;
+      --marca: #b4570b;
+      --marca-texto: #ffffff;
+      --borda: #ddd5c8;
+      --erro: #a1251b;
+      --erro-fundo: #fbe9e7;
+      --ok: #1d6b3a;
+      --ok-fundo: #e6f4ea;
     }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--fundo); color: var(--texto);
-           font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    header { background: var(--texto); color: #fff; padding: 0 16px; }
-    header nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: 720px; margin: 0 auto; }
-    header a, header button { color: #fff; text-decoration: none; min-height: 44px; display: inline-flex;
-                              align-items: center; padding: 0 10px; background: none; border: 0; font: inherit; cursor: pointer; }
-    header a[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--marca); }
-    header .marca { font-weight: 700; margin-right: auto; padding-left: 0; }
-    main { max-width: 720px; margin: 0 auto; padding: 16px; }
-    h1 { font-size: 1.35rem; margin: 0 0 12px; }
-    h2 { font-size: 1.1rem; margin: 20px 0 8px; }
-    .cartao { background: var(--cartao); border: 1px solid var(--borda); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
-    .mensagens { list-style: none; padding: 0; margin: 0 0 12px; }
-    .mensagens li { padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; }
-    .mensagens .erro { background: var(--erro-fundo); color: var(--erro); }
-    .mensagens .ok { background: var(--ok-fundo); color: var(--ok); font-weight: 600; }
-    label { display: block; font-weight: 600; margin: 8px 0 4px; }
-    input, select { font: inherit; min-height: 44px; width: 100%; padding: 8px 10px;
-                    border: 1px solid var(--borda); border-radius: 8px; background: #fff; }
-    button, .botao { font: inherit; min-height: 44px; min-width: 44px; padding: 8px 14px; border-radius: 8px;
-                     border: 1px solid var(--borda); background: #fff; color: var(--texto); cursor: pointer;
-                     text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
-    .primario { background: var(--marca); border-color: var(--marca); color: var(--marca-texto); font-weight: 700; }
-    .largo { width: 100%; }
-    .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-    .linha { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
-    .linha > * { flex: 1 1 120px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 8px 4px; border-bottom: 1px solid var(--borda); }
-    td.num, th.num { text-align: right; white-space: nowrap; }
-    .suave { color: var(--suave); font-size: .9rem; }
-    .selo { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: .8rem; font-weight: 600;
-            background: var(--ok-fundo); color: var(--ok); }
-    .selo.cancelada { background: var(--erro-fundo); color: var(--erro); }
-    .fora-da-tela { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--fundo);
+      color: var(--texto);
+      font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    header {
+      background: var(--texto);
+      color: #fff;
+      padding: 0 16px;
+    }
+
+    header nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    header a,
+    header button {
+      color: #fff;
+      text-decoration: none;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 10px;
+      background: none;
+      border: 0;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    header a[aria-current="page"] {
+      box-shadow: inset 0 -3px 0 var(--marca);
+    }
+
+    header .marca {
+      font-weight: 700;
+      margin-right: auto;
+      padding-left: 0;
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      margin: 0 0 12px;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      margin: 20px 0 8px;
+    }
+
+    .cartao {
+      background: var(--cartao);
+      border: 1px solid var(--borda);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .mensagens {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 12px;
+    }
+
+    .mensagens li {
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+
+    .mensagens .erro {
+      background: var(--erro-fundo);
+      color: var(--erro);
+    }
+
+    .mensagens .ok {
+      background: var(--ok-fundo);
+      color: var(--ok);
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin: 8px 0 4px;
+    }
+
+    input,
+    select {
+      font: inherit;
+      min-height: 44px;
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--borda);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    button,
+    .botao {
+      font: inherit;
+      min-height: 44px;
+      min-width: 44px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--borda);
+      background: #fff;
+      color: var(--texto);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .primario {
+      background: var(--marca);
+      border-color: var(--marca);
+      color: var(--marca-texto);
+      font-weight: 700;
+    }
+
+    .largo {
+      width: 100%;
+    }
+
+    .grade {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+    }
+
+    .linha {
+      display: flex;
+      gap: 8px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .linha>* {
+      flex: 1 1 120px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 8px 4px;
+      border-bottom: 1px solid var(--borda);
+    }
+
+    td.num,
+    th.num {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .suave {
+      color: var(--suave);
+      font-size: .9rem;
+    }
+
+    .selo {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: .8rem;
+      font-weight: 600;
+      background: var(--ok-fundo);
+      color: var(--ok);
+    }
+
+    .selo.cancelada {
+      background: var(--erro-fundo);
+      color: var(--erro);
+    }
+
+    .fora-da-tela {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
   </style>
 </head>
+
 <body hx-boost="true">
   {% if user.is_authenticated %}
   <header>
     <nav>
       <span class="marca">Fusca Beer</span>
-      <a href="/vendas/nova/" {% if request.path == '/vendas/nova/' %}aria-current="page"{% endif %}>Nova venda</a>
-      <a href="/vendas/" {% if request.path == '/vendas/' %}aria-current="page"{% endif %}>Vendas do dia</a>
-      <a href="/produtos/" {% if request.path == '/produtos/' %}aria-current="page"{% endif %}>Produtos</a>
+      <a href="/vendas/nova/" {% if request.path=='/vendas/nova/' %}aria-current="page" {% endif %}>Nova venda</a>
+      <a href="/vendas/" {% if request.path=='/vendas/' %}aria-current="page" {% endif %}>Vendas do dia</a>
+      <a href="/produtos/" {% if request.path=='/produtos/' %}aria-current="page" {% endif %}>Produtos</a>
       <form method="post" action="/logout/">{% csrf_token %}<button>Sair</button></form>
     </nav>
   </header>
@@ -73,4 +254,5 @@
     {% block conteudo %}{% endblock %}
   </main>
 </body>
+
 </html>
