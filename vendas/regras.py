@@ -30,3 +30,26 @@ def para_centavos(texto):
 
 def preco_valido(centavos):
     return centavos is not None and PRECO_MINIMO <= centavos <= PRECO_MAXIMO
+
+
+QUANTIDADE_MAXIMA = 99  # RN-01
+
+
+def ler_itens(valores):
+    """Lê itens "id_do_produto:quantidade" e soma o mesmo produto numa linha (RN-02).
+
+    Devolve [(id, quantidade)] na ordem em que entraram, ou None se alguma quantidade
+    informada ou somada sair de 1 a 99 (RN-01).
+    """
+    itens = {}
+    for valor in valores:
+        produto, _, quantidade = valor.partition(":")
+        if not produto.isdigit() or not quantidade.lstrip("-").isdigit():
+            return None
+        quantidade = int(quantidade)
+        if not 1 <= quantidade <= QUANTIDADE_MAXIMA:
+            return None
+        itens[int(produto)] = itens.get(int(produto), 0) + quantidade
+    if any(quantidade > QUANTIDADE_MAXIMA for quantidade in itens.values()):
+        return None
+    return list(itens.items())

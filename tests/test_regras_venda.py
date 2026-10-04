@@ -4,6 +4,7 @@ from vendas.regras import (
     calcular_total,
     calcular_troco,
     formatar_reais,
+    ler_itens,
     para_centavos,
     preco_valido,
 )
@@ -51,3 +52,18 @@ def test_faixa_de_preco(centavos, valido):
 def test_formatar_reais():
     assert formatar_reais(123456) == "1.234,56"
     assert formatar_reais(5) == "0,05"
+
+
+def test_mesmo_produto_soma_na_linha_existente():
+    assert ler_itens(["1:2", "2:1", "1:1"]) == [(1, 3), (2, 1)]
+
+
+@pytest.mark.parametrize(
+    "valores", [["1:0"], ["1:-1"], ["1:100"], ["1:98", "1:2"], ["1:abc"], ["x:1"], ["1"]]
+)
+def test_quantidade_fora_de_1_a_99_e_recusada(valores):
+    assert ler_itens(valores) is None
+
+
+def test_limite_de_99_somado_e_aceito():
+    assert ler_itens(["1:98", "1:1"]) == [(1, 99)]

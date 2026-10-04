@@ -8,7 +8,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .models import ItemVenda, Produto, Venda
-from .regras import calcular_total, calcular_troco, formatar_reais, para_centavos, preco_valido
+from .regras import (
+    calcular_total,
+    calcular_troco,
+    formatar_reais,
+    ler_itens,
+    para_centavos,
+    preco_valido,
+)
 
 
 def dia_operacao(momento):
@@ -16,19 +23,65 @@ def dia_operacao(momento):
     return (timezone.localtime(momento) - timedelta(hours=6)).date()
 
 
+MSG_QUANTIDADE = "Informe uma quantidade de 1 a 99"
+MSG_INATIVO = "Produto inativo"
+
+
+def montar_linhas(itens):
+    """Linhas da venda com o preço atual de cada produto; o subtotal é calculado aqui (RN-05)."""
+    produtos = Produto.objects.in_bulk([produto for produto, _ in itens])
+    return [
+        {
+            "produto": produtos[produto],
+            "quantidade": quantidade,
+            "subtotal": quantidade * produtos[produto].preco_centavos,
+        }
+        for produto, quantidade in itens
+        if produto in produtos
+    ]
+
+
+def tela_nova(request, itens, dados, erros=(), status=200):
+    linhas = montar_linhas(itens)
+    contexto = {
+        "produtos": Produto.objects.filter(ativo=True),
+        "linhas": linhas,
+        "total": sum(linha["subtotal"] for linha in linhas),
+        "formas": Venda.FORMAS,
+        "dados": dados,
+        "erros": erros,
+    }
+    return render(request, "vendas/nova.html", contexto, status=status)
+
+
 @login_required
 @require_GET
 def nova(request):
-    produtos = Produto.objects.filter(ativo=True)
-    return render(request, "vendas/nova.html", {"produtos": produtos, "formas": Venda.FORMAS})
+    """Tela de nova venda. Com ?produto=, adiciona o produto à venda em montagem (RN-01 a RN-03)."""
+    atuais = request.GET.getlist("item")
+    itens = ler_itens(atuais) or []
+    erros = []
+    produto = request.GET.get("produto", "")
+    if produto:
+        ativo = produto.isdigit() and Produto.objects.filter(pk=produto, ativo=True).exists()
+        novos = ler_itens([*atuais, f"{produto}:{request.GET.get('quantidade', '')}"])
+        if not ativo:
+            erros.append(MSG_INATIVO)
+        elif novos is None:
+            erros.append(MSG_QUANTIDADE)
+        else:
+            itens = novos
+    return tela_nova(request, itens, {}, erros, status=422 if erros else 200)
 
 
 def registrar(request):
-    produto = Produto.objects.get(pk=request.POST["produto"], ativo=True)
-    quantidade = int(request.POST["quantidade"])
+    itens = ler_itens(request.POST.getlist("item"))
     forma = request.POST["forma"]
     agora = timezone.now()
-    total = calcular_total([(quantidade, produto.preco_centavos)])
+    linhas = montar_linhas(itens)
+    total = calcular_total(
+        (linha["quantidade"], linha["produto"].preco_centavos) for linha in linhas
+    )
     recebido = troco = None
     if forma == Venda.DINHEIRO:
         recebido = para_centavos(request.POST["valor_recebido"])
@@ -42,14 +95,15 @@ def registrar(request):
             recebido_centavos=recebido,
             troco_centavos=troco,
         )
-        ItemVenda.objects.create(
-            venda=venda,
-            produto=produto,
-            nome=produto.nome,
-            quantidade=quantidade,
-            preco_unitario_centavos=produto.preco_centavos,
-            subtotal_centavos=total,
-        )
+        for linha in linhas:
+            ItemVenda.objects.create(
+                venda=venda,
+                produto=linha["produto"],
+                nome=linha["produto"].nome,
+                quantidade=linha["quantidade"],
+                preco_unitario_centavos=linha["produto"].preco_centavos,
+                subtotal_centavos=linha["subtotal"],
+            )
     if troco is not None:
         messages.success(request, f"Troco: R$ {formatar_reais(troco)}")
     return redirect("/vendas/")

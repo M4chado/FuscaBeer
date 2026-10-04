@@ -47,9 +47,76 @@ def step_produtos(context):
         )
 
 
+# ---------- Venda em montagem (dirigida pela tela de nova venda) ----------
+
+
+def montagem(context):
+    """Página atual da nova venda; abre a tela na primeira vez."""
+    if getattr(context, "montagem", None) is None:
+        context.montagem = pagina(context.test.client.get("/vendas/nova/"))
+    return context.montagem
+
+
+def itens_ocultos(tela):
+    return [campo["value"] for campo in tela.select("form#venda input[name=item]")]
+
+
+def adicionar(context, quantidade, nome):
+    """Toca no botão do produto com a quantidade digitada, como o operador faz."""
+    tela = montagem(context)
+    botao = next(b for b in tela.select("button.produto") if b.select_one(".nome").text == nome)
+    dados = {"item": itens_ocultos(tela), "quantidade": quantidade, "produto": botao["value"]}
+    context.resposta = context.test.client.get("/vendas/nova/", dados)
+    context.montagem = pagina(context.resposta)
+
+
+def linhas_da_montagem(context):
+    return [
+        {
+            campo: linha.select_one(f".{campo}").get_text(strip=True)
+            for campo in ("nome", "quantidade", "subtotal")
+        }
+        for linha in montagem(context).select(".montagem tr.item")
+    ]
+
+
 @when('o operador adiciona {quantidade:d} "{nome:Nome}"')
 def step_adiciona(context, quantidade, nome):
-    context.itens = [{"produto": Produto.objects.get(nome=nome).pk, "quantidade": quantidade}]
+    adicionar(context, quantidade, nome)
+
+
+@when('o operador adiciona {q1:d} "{nome1:Nome}" e {q2:d} "{nome2:Nome}"')
+def step_adiciona_dois(context, q1, nome1, q2, nome2):
+    adicionar(context, q1, nome1)
+    adicionar(context, q2, nome2)
+
+
+@when('adiciona mais {quantidade:d} "{nome:Nome}"')
+def step_adiciona_mais(context, quantidade, nome):
+    adicionar(context, quantidade, nome)
+
+
+@when('o operador tenta adicionar {quantidade} "{nome:Nome}"')
+def step_tenta_adicionar(context, quantidade, nome):
+    adicionar(context, quantidade, nome)
+
+
+@then(
+    'a venda em montagem mostra 1 linha "{nome:Nome}" com quantidade {quantidade:d} '
+    "e subtotal R$ {subtotal}"
+)
+def step_montagem_linha(context, nome, quantidade, subtotal):
+    linhas = linhas_da_montagem(context)
+    esperada = {"nome": nome, "quantidade": str(quantidade), "subtotal": f"R$ {subtotal}"}
+    assert linhas == [esperada], linhas
+
+
+@then("a venda em montagem não mostra o item")
+def step_montagem_vazia(context):
+    assert linhas_da_montagem(context) == [], linhas_da_montagem(context)
+
+
+# ---------- Pagamento e confirmação ----------
 
 
 @when('escolhe a forma de pagamento "{forma}"')
@@ -64,27 +131,22 @@ def step_valor_recebido(context, valor):
 
 @when("confirma a venda")
 def step_confirma(context):
-    item = context.itens[0]
-    context.resposta = context.test.client.post(
-        "/vendas/",
-        {
-            "produto": item["produto"],
-            "quantidade": item["quantidade"],
-            "forma": context.forma,
-            "valor_recebido": context.valor_recebido,
-        },
-        follow=True,
-    )
+    dados = {
+        "item": itens_ocultos(montagem(context)),
+        "forma": getattr(context, "forma", ""),
+        "valor_recebido": getattr(context, "valor_recebido", ""),
+    }
+    context.resposta = context.test.client.post("/vendas/", dados, follow=True)
 
 
 @then("a tela mostra o troco de R$ {valor}")
 def step_mostra_troco(context, valor):
-    assert f"Troco: R$ {valor}" in context.resposta.content.decode(), context.resposta.content
+    assert f"Troco: R$ {valor}" in texto(context.resposta), texto(context.resposta)
 
 
 @then('a lista do dia mostra uma venda de R$ {total} em "{forma}"')
 def step_lista_do_dia(context, total, forma):
-    assert f"R$ {total} em {forma}" in context.resposta.content.decode(), context.resposta.content
+    assert f"R$ {total} em {forma}" in texto(context.resposta), texto(context.resposta)
 
 
 # ---------- Acesso ----------

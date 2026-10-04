@@ -19,6 +19,24 @@ Funcionalidade: Registro de venda com forma de pagamento
     Então a tela mostra o troco de R$ 2,00
     E a lista do dia mostra uma venda de R$ 18,00 em "Dinheiro"
 
+  Cenário: CA-04 Mesmo produto adicionado duas vezes
+    Quando o operador adiciona 2 "Chopp 300 ml"
+    E adiciona mais 1 "Chopp 300 ml"
+    Então a venda em montagem mostra 1 linha "Chopp 300 ml" com quantidade 3 e subtotal R$ 24,00
+
+  # ---------- Recusas ----------
+
+  Esquema do Cenário: CA-08 Quantidade fora do limite
+    Quando o operador tenta adicionar <qtd> "Chopp 300 ml"
+    Então a tela mostra a mensagem "Informe uma quantidade de 1 a 99"
+    E a venda em montagem não mostra o item
+
+    Exemplos:
+      | qtd |
+      | 0   |
+      | -1  |
+      | 100 |
+
   # ---------- Produtos ----------
 
   Cenário: CA-18 Nome de produto repetido

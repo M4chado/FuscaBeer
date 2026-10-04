@@ -1,17 +1,63 @@
 {% extends "base.html" %}
+{% load reais %}
 {% block titulo %}Nova venda{% endblock %}
 {% block conteudo %}
 <h1>Nova venda</h1>
-<form method="post" action="/vendas/">
+
+{# Montagem: cada toque num produto volta ao servidor, que soma a linha e calcula o subtotal. #}
+<form id="montagem" method="get" action="/vendas/nova/" class="cartao" novalidate>
+  {% for linha in linhas %}<input type="hidden" name="item" value="{{ linha.produto.pk }}:{{ linha.quantidade }}">{% endfor %}
+  <div class="linha">
+    <div><label for="quantidade">Quantidade</label>
+      <input id="quantidade" name="quantidade" type="number" inputmode="numeric" min="1" max="99" value="1"></div>
+    <div class="suave">Toque no produto para adicionar essa quantidade.</div>
+  </div>
+  <div class="grade" style="margin-top:8px">
+    {% for produto in produtos %}
+    <button class="produto" name="produto" value="{{ produto.pk }}">
+      <span><span class="nome">{{ produto.nome }}</span><br><span class="preco suave">{{ produto.preco_centavos|reais }}</span></span>
+    </button>
+    {% empty %}
+    <p class="suave">Nenhum produto ativo. <a href="/produtos/">Cadastre um produto</a>.</p>
+    {% endfor %}
+  </div>
+</form>
+
+<section class="cartao montagem">
+  <h2 style="margin-top:0">Venda em montagem</h2>
+  {% if linhas %}
+  <table>
+    <thead><tr><th>Produto</th><th class="num">Qtd</th><th class="num">Subtotal</th></tr></thead>
+    <tbody>
+      {% for linha in linhas %}
+      <tr class="item">
+        <td class="nome">{{ linha.produto.nome }}</td>
+        <td class="num quantidade">{{ linha.quantidade }}</td>
+        <td class="num subtotal">{{ linha.subtotal|reais }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot><tr><th colspan="2">Total</th><th class="num total">{{ total|reais }}</th></tr></tfoot>
+  </table>
+  {% else %}
+  <p class="suave">Nenhum produto adicionado.</p>
+  {% endif %}
+</section>
+
+<form id="venda" method="post" action="/vendas/" class="cartao" novalidate>
   {% csrf_token %}
-  <select name="produto">
-    {% for produto in produtos %}<option value="{{ produto.pk }}">{{ produto.nome }}</option>{% endfor %}
-  </select>
-  <input name="quantidade" value="1">
-  <select name="forma">
-    {% for valor, rotulo in formas %}<option value="{{ valor }}">{{ rotulo }}</option>{% endfor %}
-  </select>
-  <input name="valor_recebido">
-  <button>Confirmar venda</button>
+  {% for linha in linhas %}<input type="hidden" name="item" value="{{ linha.produto.pk }}:{{ linha.quantidade }}">{% endfor %}
+  <h2 style="margin-top:0">Pagamento</h2>
+  <div class="grade formas">
+    {% for valor, rotulo in formas %}
+    <label class="botao"><input type="radio" name="forma" value="{{ valor }}" style="width:auto;min-height:0;margin-right:6px" {% if dados.forma == valor %}checked{% endif %}>{{ rotulo }}</label>
+    {% endfor %}
+  </div>
+  <label for="valor_recebido">Valor recebido (só em dinheiro)</label>
+  <input id="valor_recebido" name="valor_recebido" inputmode="decimal" placeholder="20,00" value="{{ dados.valor_recebido|default:'' }}">
+  <p class="linha">
+    <a class="botao" href="/vendas/nova/">Recomeçar</a>
+    <button class="primario">Confirmar venda</button>
+  </p>
 </form>
 {% endblock %}
