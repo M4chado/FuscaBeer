@@ -1,6 +1,12 @@
 import pytest
 
-from vendas.regras import calcular_total, calcular_troco
+from vendas.regras import (
+    calcular_total,
+    calcular_troco,
+    formatar_reais,
+    para_centavos,
+    preco_valido,
+)
 
 
 def test_total_e_soma_dos_subtotais():
@@ -14,3 +20,34 @@ def test_total_e_soma_dos_subtotais():
 )
 def test_troco_em_dinheiro(total, recebido, troco):
     assert calcular_troco(total, recebido) == troco
+
+
+@pytest.mark.parametrize(
+    ("texto", "centavos"),
+    [
+        ("8,00", 800),
+        ("R$ 1.000,00", 100000),
+        ("999,99", 99999),
+        ("10", 1000),
+        ("10,5", 1050),
+        ("0,01", 1),
+        ("", None),
+        ("-1", None),
+        ("1,234", None),
+        ("abc", None),
+    ],
+)
+def test_para_centavos(texto, centavos):
+    assert para_centavos(texto) == centavos
+
+
+@pytest.mark.parametrize(
+    ("centavos", "valido"), [(None, False), (0, False), (1, True), (99999, True), (100000, False)]
+)
+def test_faixa_de_preco(centavos, valido):
+    assert preco_valido(centavos) is valido
+
+
+def test_formatar_reais():
+    assert formatar_reais(123456) == "1.234,56"
+    assert formatar_reais(5) == "0,05"

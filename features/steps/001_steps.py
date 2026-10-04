@@ -114,3 +114,37 @@ def step_nao_registra(context):
     entrar_como_operador(context)
     lista = pagina(context.test.client.get("/vendas/"))
     assert not lista.select(".venda"), lista.get_text(" ")
+
+
+# ---------- Mensagens e lista de produtos (tela atual) ----------
+
+
+@then('a tela mostra a mensagem "{mensagem}"')
+def step_mostra_mensagem(context, mensagem):
+    mensagens = [li.get_text(" ", strip=True) for li in pagina(context.resposta).select(".erro")]
+    assert mensagem in mensagens, (context.resposta.status_code, mensagens)
+
+
+def nomes_de_produto(resposta):
+    return [n.get_text(strip=True) for n in pagina(resposta).select(".produto .nome")]
+
+
+@then('a lista de produtos continua com {quantidade:d} produto chamado "{nome:Nome}"')
+def step_lista_produtos_com(context, quantidade, nome):
+    nomes = nomes_de_produto(context.resposta)
+    assert nomes.count(nome) == quantidade, nomes
+
+
+@then('a lista de produtos não mostra "{nome:Nome}"')
+def step_lista_produtos_sem(context, nome):
+    nomes = nomes_de_produto(context.resposta)
+    assert nomes, "a tela não tem lista de produtos"
+    assert nome not in nomes, nomes
+
+
+# ---------- Produtos ----------
+
+
+@when('o operador cadastra o produto "{nome:Nome}" com preço R$ {preco}')
+def step_cadastra_produto(context, nome, preco):
+    context.resposta = context.test.client.post("/produtos/", {"nome": nome, "preco": preco})

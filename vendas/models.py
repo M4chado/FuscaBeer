@@ -1,10 +1,23 @@
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class Produto(models.Model):
     nome = models.CharField(max_length=60)
     preco_centavos = models.PositiveIntegerField()
     ativo = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["-ativo", "nome"]
+        constraints = [
+            # RN-13: nome único entre ativos, sem diferenciar maiúsculas (os espaços das pontas
+            # saem antes de salvar).
+            models.UniqueConstraint(
+                Lower("nome"),
+                condition=models.Q(ativo=True),
+                name="produto_nome_unico_entre_ativos",
+            ),
+        ]
 
     def __str__(self):
         return self.nome

@@ -8,16 +8,12 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .models import ItemVenda, Produto, Venda
-from .regras import calcular_total, calcular_troco, formatar_reais
+from .regras import calcular_total, calcular_troco, formatar_reais, para_centavos, preco_valido
 
 
 def dia_operacao(momento):
     """RN-11: o dia de operação começa às 06:00."""
     return (timezone.localtime(momento) - timedelta(hours=6)).date()
-
-
-def para_centavos(texto):
-    return int(texto.replace(".", "").replace(",", ""))
 
 
 @login_required
@@ -72,3 +68,43 @@ def listar(request):
 @require_http_methods(["GET", "POST"])
 def vendas(request):
     return registrar(request) if request.method == "POST" else listar(request)
+
+
+# ---------- Produtos ----------
+
+MSG_NOME = "Informe um nome de 2 a 60 caracteres"
+MSG_NOME_EM_USO = "Já existe um produto ativo com este nome"
+MSG_PRECO = "Informe um preço de R$ 0,01 a R$ 999,99"
+
+
+def nome_em_uso(nome, exceto=None):
+    """RN-13: compara sem diferenciar maiúsculas; o nome já chega sem espaços nas pontas."""
+    return Produto.objects.filter(ativo=True, nome__iexact=nome).exclude(pk=exceto).exists()
+
+
+def tela_produtos(request, erros=(), dados=None, status=200):
+    contexto = {"produtos": Produto.objects.all(), "erros": erros, "dados": dados or {}}
+    return render(request, "vendas/produtos.html", contexto, status=status)
+
+
+def cadastrar_produto(request):
+    nome = request.POST.get("nome", "").strip()
+    preco = para_centavos(request.POST.get("preco", ""))
+    erros = []
+    if not 2 <= len(nome) <= 60:
+        erros.append(MSG_NOME)
+    elif nome_em_uso(nome):
+        erros.append(MSG_NOME_EM_USO)
+    if not preco_valido(preco):
+        erros.append(MSG_PRECO)
+    if erros:
+        return tela_produtos(request, erros, request.POST, status=422)
+    Produto.objects.create(nome=nome, preco_centavos=preco)
+    messages.success(request, f"Produto {nome} cadastrado.")
+    return redirect("/produtos/")
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def produtos(request):
+    return cadastrar_produto(request) if request.method == "POST" else tela_produtos(request)

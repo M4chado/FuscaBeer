@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load reais %}
+{% block titulo %}Produtos{% endblock %}
+{% block conteudo %}
+<h1>Produtos</h1>
+<form method="post" action="/produtos/" class="cartao">
+  {% csrf_token %}
+  <h2 style="margin-top:0">Cadastrar produto</h2>
+  <div class="linha">
+    <div><label for="nome">Nome</label>
+      <input id="nome" name="nome" maxlength="80" required value="{{ dados.nome|default:'' }}"></div>
+    <div><label for="preco">Preço (R$)</label>
+      <input id="preco" name="preco" inputmode="decimal" placeholder="8,00" required value="{{ dados.preco|default:'' }}"></div>
+    <div><button class="primario largo">Cadastrar</button></div>
+  </div>
+</form>
+
+<ul class="cartao" style="list-style:none">
+  {% for produto in produtos %}
+  <li class="produto" id="produto-{{ produto.pk }}">
+    <strong class="nome">{{ produto.nome }}</strong>
+    <span class="preco">{{ produto.preco_centavos|reais }}</span>
+    <span class="selo situacao {% if not produto.ativo %}cancelada{% endif %}">{{ produto.ativo|yesno:"Ativo,Inativo" }}</span>
+  </li>
+  {% empty %}
+  <li class="suave">Nenhum produto cadastrado.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
