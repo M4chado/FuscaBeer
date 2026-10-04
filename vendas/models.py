@@ -33,6 +33,15 @@ class Venda(models.Model):
     total_centavos = models.PositiveIntegerField()
     recebido_centavos = models.PositiveIntegerField(null=True, blank=True)
     troco_centavos = models.PositiveIntegerField(null=True, blank=True)
+    # RN-10: cancelar marca a venda; ela continua na lista e sai dos totais.
+    CONFIRMADA, CANCELADA = "Confirmada", "Cancelada"
+    situacao = models.CharField(
+        max_length=10,
+        choices=[(CONFIRMADA, CONFIRMADA), (CANCELADA, CANCELADA)],
+        default=CONFIRMADA,
+    )
+    motivo_cancelamento = models.CharField(max_length=200, blank=True)
+    cancelada_em = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Venda {self.pk} ({self.forma})"

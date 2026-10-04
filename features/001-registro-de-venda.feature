@@ -126,6 +126,32 @@ Funcionalidade: Registro de venda com forma de pagamento
     Então essa venda aparece na lista
     E ela não aparece na consulta do dia de operação 02/10/2026
 
+  # ---------- Cancelamento ----------
+
+  Cenário: CA-14 Cancelar venda do dia com motivo
+    Dado o dia de operação do CA-12
+    Quando o operador cancela a venda em "Crédito" com o motivo "Lançada em duplicidade"
+    Então a lista do dia mostra essa venda marcada como "Cancelada"
+    E a tela mostra 3 vendas e total geral de R$ 44,00
+    E a tela mostra total em "Crédito" de R$ 0,00
+
+  Cenário: CA-15 Cancelar sem motivo
+    Dado que o operador confirmou uma venda de 1 "Chopp 300 ml" em "Pix"
+    Quando o operador tenta cancelar essa venda sem informar motivo
+    Então a tela mostra a mensagem "Informe o motivo do cancelamento"
+    E a lista do dia mostra essa venda como "Confirmada"
+
+  Cenário: CA-16 Cancelar venda de dia de operação anterior
+    Dado que existe uma venda Confirmada no dia de operação anterior ao corrente
+    Quando o operador tenta cancelar essa venda com o motivo "Erro de lançamento"
+    Então a tela mostra a mensagem "Só é possível cancelar vendas do dia de operação atual"
+    E a consulta daquele dia mostra essa venda como "Confirmada"
+
+  Cenário: CA-17 Cancelar venda já cancelada
+    Dado que o operador cancelou uma venda com o motivo "Lançada em duplicidade"
+    Quando o operador tenta cancelar a mesma venda de novo
+    Então a tela mostra a mensagem "Esta venda já está cancelada"
+
   # ---------- Produtos ----------
 
   Cenário: CA-18 Nome de produto repetido

@@ -141,7 +141,9 @@ def tela_do_dia(request, dia, erros=(), status=200):
         "dia": dia,
         "hoje": dia_operacao(timezone.now()),
         "vendas": vendas,
-        "resumo": totais_do_dia([(v.forma, v.total_centavos) for v in vendas]),
+        "resumo": totais_do_dia(
+            [(v.forma, v.total_centavos) for v in vendas if v.situacao == Venda.CONFIRMADA]
+        ),
         "erros": erros,
     }
     return render(request, "vendas/lista.html", contexto, status=status)
@@ -163,6 +165,32 @@ def listar(request):
 @require_http_methods(["GET", "POST"])
 def vendas(request):
     return registrar(request) if request.method == "POST" else listar(request)
+
+
+MSG_MOTIVO = "Informe o motivo do cancelamento"
+MSG_OUTRO_DIA = "Só é possível cancelar vendas do dia de operação atual"
+MSG_JA_CANCELADA = "Esta venda já está cancelada"
+
+
+@login_required
+@require_POST
+def cancelar(request, pk):
+    """POST /vendas/{id}/cancelamento/ (RN-09, RN-10): 404, 409 por estado, 422 por motivo."""
+    venda = get_object_or_404(Venda, pk=pk)
+    hoje = dia_operacao(timezone.now())
+    if venda.situacao == Venda.CANCELADA:
+        return tela_do_dia(request, hoje, [MSG_JA_CANCELADA], status=409)
+    if venda.dia_operacao != hoje:
+        return tela_do_dia(request, hoje, [MSG_OUTRO_DIA], status=409)
+    motivo = request.POST.get("motivo", "").strip()
+    if not 3 <= len(motivo) <= 200:
+        return tela_do_dia(request, hoje, [MSG_MOTIVO], status=422)
+    venda.situacao = Venda.CANCELADA
+    venda.motivo_cancelamento = motivo
+    venda.cancelada_em = timezone.now()
+    venda.save(update_fields=["situacao", "motivo_cancelamento", "cancelada_em"])
+    messages.success(request, f"Venda nº {venda.pk} cancelada.")
+    return redirect("/vendas/")
 
 
 # ---------- Produtos ----------

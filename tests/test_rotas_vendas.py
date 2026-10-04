@@ -16,3 +16,8 @@ def test_consulta_com_dia_invalido_responde_422(operador):
     resposta = operador.get("/vendas/?dia=01/10/2026")
     assert resposta.status_code == 422
     assert "Informe o dia no formato AAAA-MM-DD" in resposta.content.decode()
+
+
+def test_cancelar_venda_inexistente_responde_404(operador):
+    resposta = operador.post("/vendas/999/cancelamento/", {"motivo": "Erro de lançamento"})
+    assert resposta.status_code == 404

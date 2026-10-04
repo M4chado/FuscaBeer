@@ -11,7 +11,7 @@
 </form>
 
 <section class="cartao resumo">
-  <p style="margin-top:0"><span class="qtd-vendas">{{ resumo.quantidade }}</span> venda{{ resumo.quantidade|pluralize }}
+  <p style="margin-top:0"><span class="qtd-vendas">{{ resumo.quantidade }}</span> venda{{ resumo.quantidade|pluralize }} confirmada{{ resumo.quantidade|pluralize }}
     · total geral <strong class="total-geral">{{ resumo.total|reais }}</strong></p>
   <table id="totais-por-forma">
     <tbody>
@@ -34,9 +34,22 @@
       <span class="itens suave">{{ venda.qtd_itens }} ite{{ venda.qtd_itens|pluralize:"m,ns" }}</span>
       <span class="suave">nº {{ venda.pk }} · {{ venda.criada_em|time:"H:i" }}</span>
     </div>
+    <div><span class="selo situacao {% if venda.situacao == 'Cancelada' %}cancelada{% endif %}">{{ venda.situacao }}</span>
+      {% if venda.motivo_cancelamento %}<span class="suave">— {{ venda.motivo_cancelamento }}</span>{% endif %}</div>
     {% if venda.recebido_centavos is not None %}
     <div class="suave">Recebido <span class="recebido">{{ venda.recebido_centavos|reais }}</span>
       · Troco <span class="troco">{{ venda.troco_centavos|reais }}</span></div>
+    {% endif %}
+    {% if venda.situacao == 'Confirmada' and dia == hoje %}
+    <details style="margin-top:6px">
+      <summary class="botao" style="display:inline-flex">Cancelar venda</summary>
+      <form class="cancelar linha" method="post" action="/vendas/{{ venda.pk }}/cancelamento/" style="margin-top:6px">
+        {% csrf_token %}
+        <div><label for="motivo-{{ venda.pk }}">Motivo</label>
+          <input id="motivo-{{ venda.pk }}" name="motivo" maxlength="200" placeholder="Ex.: lançada em duplicidade"></div>
+        <div style="flex:0 0 auto"><button>Confirmar cancelamento</button></div>
+      </form>
+    </details>
     {% endif %}
   </li>
   {% empty %}

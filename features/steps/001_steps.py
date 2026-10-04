@@ -448,6 +448,97 @@ def step_venda_nao_aparece(context, data):
     assert context.venda["id"] not in ids, ids
 
 
+# ---------- Cancelamento ----------
+
+VENDAS_DO_CA_12 = [
+    ([(2, "Chopp 300 ml"), (1, "Água 500 ml")], "Pix"),
+    ([(3, "Cerveja lata 350 ml")], "Dinheiro"),
+    ([(1, "Chopp 300 ml")], "Crédito"),
+    ([(1, "Cerveja lata 350 ml")], "Pix"),
+]
+
+
+def url_de_cancelamento(venda):
+    return f"/vendas/{venda['id'].removeprefix('venda-')}/cancelamento/"
+
+
+def cancelar_pela_tela(context, motivo):
+    """Usa o formulário de cancelamento que a lista do dia mostra na linha da venda."""
+    tela = pagina(context.test.client.get("/vendas/"))
+    formulario = tela.select_one(f"#{context.venda['id']} form.cancelar")
+    assert formulario, f"a lista não oferece cancelar {context.venda['id']}"
+    resposta = context.test.client.post(formulario["action"], {"motivo": motivo}, follow=True)
+    context.resposta = resposta
+
+
+@given("o dia de operação do CA-12")
+def step_dia_do_ca12(context):
+    for minuto, (itens, forma) in enumerate(VENDAS_DO_CA_12):
+        acertar_relogio(context, em_brasilia("01/10/2026", f"20:{minuto:02d}"))
+        registrar_pela_tela(context, itens, forma)
+
+
+@when('o operador cancela a venda em "{forma}" com o motivo "{motivo}"')
+def step_cancela(context, forma, motivo):
+    linhas = vendas_na_lista(context.test.client.get("/vendas/"))
+    context.venda = next(v for v in linhas if v["forma"] == forma)
+    cancelar_pela_tela(context, motivo)
+    assert context.resposta.status_code == 200, context.resposta.status_code
+
+
+@when("o operador tenta cancelar essa venda sem informar motivo")
+def step_cancela_sem_motivo(context):
+    cancelar_pela_tela(context, "")
+
+
+@given("que existe uma venda Confirmada no dia de operação anterior ao corrente")
+def step_venda_dia_anterior(context):
+    acertar_relogio(context, em_brasilia("01/10/2026", "20:00"))
+    registrar_pela_tela(context, [(1, "Chopp 300 ml")], "Pix")
+    context.dia_da_venda = "01/10/2026"
+    acertar_relogio(context, em_brasilia("02/10/2026", "20:00"))
+
+
+@when('o operador tenta cancelar essa venda com o motivo "{motivo}"')
+def step_tenta_cancelar(context, motivo):
+    # A lista do dia corrente não oferece o botão; a requisição vai direto à rota.
+    url = url_de_cancelamento(context.venda)
+    context.resposta = context.test.client.post(url, {"motivo": motivo})
+
+
+@given('que o operador cancelou uma venda com o motivo "{motivo}"')
+def step_cancelou(context, motivo):
+    registrar_pela_tela(context, [(1, "Chopp 300 ml")], "Pix")
+    context.motivo = motivo
+    cancelar_pela_tela(context, motivo)
+    assert context.resposta.status_code == 200, context.resposta.status_code
+
+
+@when("o operador tenta cancelar a mesma venda de novo")
+def step_cancela_de_novo(context):
+    url = url_de_cancelamento(context.venda)
+    context.resposta = context.test.client.post(url, {"motivo": context.motivo})
+
+
+@then('a lista do dia mostra essa venda marcada como "{situacao}"')
+@then('a lista do dia mostra essa venda como "{situacao}"')
+def step_situacao_na_lista(context, situacao):
+    venda = venda_na_lista(context)
+    assert venda and venda["situacao"] == situacao, venda
+
+
+@then('a consulta daquele dia mostra essa venda como "{situacao}"')
+def step_situacao_naquele_dia(context, situacao):
+    venda = venda_na_lista(context, url_do_dia(context.dia_da_venda))
+    assert venda and venda["situacao"] == situacao, venda
+
+
+@then('a tela mostra total em "{forma}" de R$ {total}')
+def step_total_da_forma(context, forma, total):
+    totais = totais_por_forma(context.resposta)
+    assert totais[forma] == f"R$ {total}", totais
+
+
 # ---------- Produtos ----------
 
 
