@@ -18,3 +18,11 @@ Funcionalidade: Registro de venda com forma de pagamento
     E confirma a venda
     Então a tela mostra o troco de R$ 2,00
     E a lista do dia mostra uma venda de R$ 18,00 em "Dinheiro"
+
+  # ---------- Acesso ----------
+
+  Cenário: CA-20 Acesso sem sessão
+    Dado que o visitante não tem sessão ativa
+    Quando o visitante abre o endereço da tela de nova venda
+    Então o sistema exibe a tela de login
+    E o sistema não registra venda

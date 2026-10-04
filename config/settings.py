@@ -93,8 +93,11 @@ USE_I18N = True
 USE_TZ = True
 
 LOGIN_URL = "/login/"
+LOGIN_REDIRECT_URL = "/vendas/nova/"
+LOGOUT_REDIRECT_URL = "/login/"
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 MAILERS = {
     "default": {
