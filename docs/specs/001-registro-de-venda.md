@@ -397,7 +397,7 @@ A regra mais importante da feature é a RN-07: o pagamento em dinheiro é onde n
 
 | ID | Ambiguidade encontrada | Decisão | Motivo |
 |---|---|---|---|
-| D-01 | "Vendas do dia": dia do calendário (00:00–23:59) ou expediente? | Dia de operação das 06:00 às 05:59:59 do dia seguinte (RN-11) | Um bar pode fechar depois da meia-noite; a venda da 01:30 pertence ao mesmo expediente e ao mesmo fechamento. **Confirmar o horário de corte com o Gilmar.** |
+| D-01 | "Vendas do dia": dia do calendário (00:00–23:59) ou expediente? | Dia de operação das 06:00 às 05:59:59 do dia seguinte (RN-11) | Um bar pode fechar depois da meia-noite; a venda da 01:30 pertence ao mesmo expediente e ao mesmo fechamento. Confirmado com o Gilmar: o estabelecimento abre às 10:00 e fecha às 22:00, quase sempre sem passar disso; o corte às 06:00 fica no intervalo em que o bar está fechado e cobre a noite eventual que passe de meia-noite. |
 | D-02 | "Cartão": uma forma ou duas? | Débito e Crédito separados | A maquininha mostra os dois separados; a conferência da spec 002 compara forma por forma. |
 | D-03 | Cliente que paga parte em dinheiro e parte no Pix | Fora do escopo | Não apareceu na entrevista e muda o cálculo de troco e de totais. Reavaliar depois do piloto. |
 | D-04 | Quem usa o sistema: o dono, o atendente ou os dois com permissões diferentes? | Um único perfil (Operador) e um login por estabelecimento | O piloto é um estabelecimento pequeno; perfis de permissão não resolvem nenhuma das três dores. |
@@ -412,7 +412,7 @@ A regra mais importante da feature é a RN-07: o pagamento em dinheiro é onde n
 | D-13 | Faixa de preço do produto | De R$ 0,01 a R$ 999,99 (RN-12) | Preço zero criaria venda sem valor; o teto barra erro de casas decimais (R$ 8.000,00 no lugar de R$ 8,00). |
 | D-14 | Valor recebido em Débito, Crédito ou Pix | O sistema recusa (RN-08) | Um valor recebido sem sentido distorceria a conferência da spec 002. |
 | D-15 | Desconto, acréscimo, gorjeta e couvert | Fora do escopo | O Gilmar não os citou na entrevista; entram em spec própria se ele pedir. |
-| D-16 | Registrar venda sem internet | Fora do escopo; o sistema exige conexão | Sincronização de vendas feitas sem conexão aumenta o escopo da primeira feature. **Confirmar com o Gilmar se o sinal no balcão é estável.** |
+| D-16 | Registrar venda sem internet | Fora do escopo; o sistema exige conexão | Sincronização de vendas feitas sem conexão aumenta o escopo da primeira feature. Confirmado com o Gilmar: o sinal de internet no balcão é estável. |
 | D-17 | "Registrar sem atrasar o atendimento" (vagueza) | Até 15 segundos e 6 toques para uma venda de até 3 itens (RS-01) | Hoje o registro é de cabeça; um sistema mais lento que isso no balcão deixa de ser usado. |
 | D-18 | Stack do projeto | Python 3.13, Django 6.1, PostgreSQL 17 e telas com templates + HTMX (seção 7) | A equipe já trabalha com Django; login, sessão, transação e painel admin vêm prontos; PostgreSQL também no ambiente local evita diferença de data e fuso entre ambientes, que afetaria a RN-11. |
 | D-19 | Ordem da lista de vendas do dia | Da mais recente para a mais antiga (RN-14) | A venda que o operador quer conferir ou cancelar é a última registrada. |
@@ -428,4 +428,4 @@ A regra mais importante da feature é a RN-07: o pagamento em dinheiro é onde n
 
 **Se o código fosse apagado agora, esta spec seria suficiente para reconstruí-lo?**
 
-Para o comportamento, sim: objetivo, dados, 15 regras, 20 critérios de aceite, a tabela de exemplos e a stack da seção 7 definem o que construir, com o quê, e como verificar. Para a reconstrução completa, ainda faltam duas coisas: (1) a confirmação do horário de corte do dia de operação com o Gilmar (D-01); (2) o layout das telas, que esta spec não fixa de propósito — duas reconstruções teriam o mesmo comportamento com telas diferentes.
+Para o comportamento, sim: objetivo, dados, 15 regras, 20 critérios de aceite, a tabela de exemplos e a stack da seção 7 definem o que construir, com o quê, e como verificar. Para a reconstrução completa, falta uma coisa: o layout das telas, que esta spec não fixa de propósito — duas reconstruções teriam o mesmo comportamento com telas diferentes. O horário de corte do dia de operação (D-01) e a conexão no balcão (D-16) foram confirmados com o Gilmar.

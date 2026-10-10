@@ -8,7 +8,7 @@ Python 3.13 · Django 6.1 · PostgreSQL 17 · templates + HTMX · pytest + pytes
 ## Como rodar (do zero)
 ```bash
 cp .env.example .env              # depois troque as senhas
-docker compose up -d db           # PostgreSQL 17 em localhost:5432
+                                  # banco: veja "Banco de dados" abaixo (Docker ou PostgreSQL 17 local)
 python3.13 -m venv .venv
 source .venv/bin/activate         # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
@@ -16,6 +16,14 @@ python manage.py migrate
 python manage.py createsuperuser  # o login único do operador (D-04); pede usuário e senha
 python manage.py runserver        # http://localhost:8000 → entre com esse login
 ```
+### Banco de dados (PostgreSQL 17 em localhost:5432; use um dos dois)
+- **Docker:** `docker compose up -d db`
+- **Local (sem Docker):** instale o PostgreSQL 17 e crie o usuário e o banco com os valores do `.env`:
+  ```sql
+  CREATE USER fuscabeer WITH PASSWORD 'a-senha-do-seu-.env' CREATEDB;  -- CREATEDB: o pytest cria um banco de teste
+  CREATE DATABASE fuscabeer OWNER fuscabeer;
+  ```
+
 Depois de entrar: cadastre os produtos em **Produtos** e registre vendas em **Nova venda**.
 
 ## Como testar (passa antes de todo commit)

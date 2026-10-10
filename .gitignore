@@ -17,3 +17,6 @@ media/
 # Claude Code: preferências pessoais não vão para o repositório
 .claude/settings.local.json
 CLAUDE.local.md
+
+# Documentos e contexto local
+Contexto/
