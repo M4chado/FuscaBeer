@@ -237,9 +237,9 @@
   <header>
     <nav>
       <span class="marca">Fusca Beer</span>
-      <a href="/vendas/nova/" {% if request.path=='/vendas/nova/' %}aria-current="page" {% endif %}>Nova venda</a>
-      <a href="/vendas/" {% if request.path=='/vendas/' %}aria-current="page" {% endif %}>Vendas do dia</a>
-      <a href="/produtos/" {% if request.path=='/produtos/' %}aria-current="page" {% endif %}>Produtos</a>
+      <a href="/vendas/nova/" {% if request.path == '/vendas/nova/' %}aria-current="page" {% endif %}>Nova venda</a>
+      <a href="/vendas/" {% if request.path == '/vendas/' %}aria-current="page" {% endif %}>Vendas do dia</a>
+      <a href="/produtos/" {% if request.path == '/produtos/' %}aria-current="page" {% endif %}>Produtos</a>
       <form method="post" action="/logout/">{% csrf_token %}<button>Sair</button></form>
     </nav>
   </header>
