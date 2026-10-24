@@ -26,4 +26,5 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("", RedirectView.as_view(url="/vendas/nova/")),
     path("", include("vendas.urls")),
+    path("", include("caixa.urls")),
 ]

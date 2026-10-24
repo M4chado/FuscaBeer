@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load reais %}
+{% block titulo %}Fechamento de caixa{% endblock %}
+{% block conteudo %}
+<h1>Fechamento de caixa do dia de operação {{ dia|date:"d/m/Y" }}</h1>
+{% if fechamento %}<p>Situação: <span class="selo situacao-caixa">{{ fechamento.situacao }}</span></p>{% endif %}
+
+<section class="cartao">
+  <table id="conferencia">
+    <thead><tr><th>Forma</th><th class="num">Esperado</th><th class="num">Contado</th><th class="num">Divergência</th></tr></thead>
+    <tbody>
+      {% for linha in linhas %}
+      <tr>
+        <th>{{ linha.forma }}</th>
+        <td class="num esperado">{{ linha.esperado|reais }}</td>
+        <td class="num contado">{% if linha.contado is not None %}{{ linha.contado|reais }}{% endif %}</td>
+        <td class="num divergencia"></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if not fechamento %}
+<form class="conferir cartao" method="post" action="/caixa/conferencia/">
+  {% csrf_token %}
+  <input type="hidden" name="dia" value="{{ dia|date:'Y-m-d' }}">
+  <div class="linha">
+    {% for linha in linhas %}
+    <div><label for="contado-{{ forloop.counter }}">{{ linha.forma }}</label>
+      <input id="contado-{{ forloop.counter }}" class="contado" data-forma="{{ linha.forma }}"
+        name="contado_{{ linha.forma }}" inputmode="decimal" placeholder="0,00"></div>
+    {% endfor %}
+  </div>
+  <p><button class="primario largo">Conferir caixa</button></p>
+</form>
+{% endif %}
+{% endblock %}

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "behave_django",
     "vendas",
+    "caixa",
 ]
 
 MIDDLEWARE = [
