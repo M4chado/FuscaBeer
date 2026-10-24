@@ -21,7 +21,7 @@
   </table>
 </section>
 
-{% if not fechamento %}
+{% if not fechamento or fechamento.situacao == "Pendente" %}
 <form class="conferir cartao" method="post" action="/caixa/conferencia/">
   {% csrf_token %}
   <input type="hidden" name="dia" value="{{ dia|date:'Y-m-d' }}">
