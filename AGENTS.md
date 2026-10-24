@@ -26,14 +26,16 @@ python manage.py runserver        # http://localhost:8000 → entre com esse log
 
 Depois de entrar: cadastre os produtos em **Produtos** e registre vendas em **Nova venda**.
 
-## Como testar (passa antes de todo commit)
+## Como testar
 ```bash
 ruff check . && ruff format --check .   # lint e formatação
 pytest                                  # testes de unidade em tests/
 python manage.py behave                 # critérios de aceite em features/
 python manage.py makemigrations --check --dry-run   # modelos e migrações em sincronia
 ```
-Esta é a única definição de pronto: os quatro comandos passando. A skill e o CLAUDE.md apontam para cá.
+Esta é a única definição de pronto para os commits de verde (`feat`) e de refatoração (`refactor`): os quatro comandos passando. A skill e o CLAUDE.md apontam para cá.
+
+Exceção: no commit do vermelho (`test(NNN): ... (CA-xx)`), tudo passa menos o cenário ou teste novo daquele CA. Ele precisa falhar pelo motivo esperado (ex.: 404 da rota que não existe, `AttributeError`), e os testes antigos continuam verdes.
 
 ## Estrutura
 - `config/` configuração do Django · `tests/` pytest · `features/` cenários Gherkin (`# language: pt`)
@@ -48,7 +50,12 @@ Esta é a única definição de pronto: os quatro comandos passando. A skill e o
 - Cada critério de aceite (CA-xx) vira um cenário em `features/NNN-<feature>.feature` com o mesmo ID no nome.
 - Valores em R$ são inteiros em centavos. Datas usam `America/Sao_Paulo`.
 - Segredos só no `.env`, que não vai para o Git e é bloqueado nas permissões (Read de `.env`, `.env.local` e `.env.production`, e `cat`/`head`/`tail`/`type` do `.env`). Para saber as variáveis, leia `.env.example`.
-- Commit cita spec e critério: `feat(001): calcula troco em dinheiro (CA-02)`.
+- Commit cita spec e critério. Cada critério passa por três commits:
+  - `test(002): conferência sem divergência fecha o caixa (CA-01)`: só o teste, vermelho
+  - `feat(002): fecha caixa sem divergência (CA-01)`: o mínimo para o verde
+  - `refactor(002): <o que melhorou>`: sem mudar comportamento, tudo verde
+- Teste de critério não se altera para passar. No verde e no refatorar, não edite, apague, pule (`@skip`, `@wip`) nem afrouxe cenário em `features/` ou teste em `tests/`. Se o teste parece errado, pare e proponha a mudança (na spec primeiro, se for de comportamento).
+- Teste que fica vermelho durante um `refactor` indica mudança de comportamento: reverta a mudança em vez de ajustar o teste.
 - Servidores MCP: nenhum instalado.
 
 ## Como você deve trabalhar

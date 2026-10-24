@@ -13,7 +13,10 @@ Um critério por vez. O texto do critério na spec é a fonte da verdade.
 4. Procure em `features/steps/` os passos que já existem (`grep -rn "@given\|@when\|@then" features/steps`). Escreva só os que faltam, em `features/steps/NNN_steps.py`. Cada passo `Então` confere o que o usuário vê: código de resposta, texto da página ou redirecionamento. Nunca consulte o banco num `Então`.
 5. Rode só esse cenário e confirme que ele **falha** pelo motivo esperado:
    `python manage.py behave features/NNN-<feature>.feature --name "CA-xx"`
-   Se passar antes de existir implementação, o teste não testa nada: revise o passo antes de seguir.
-6. Implemente o mínimo para o cenário passar. Se o critério depende de uma regra de cálculo (total, troco, totais do dia), escreva também o teste de unidade em `tests/test_<regra>.py`.
-7. Rode a prova completa, que é a mesma do `AGENTS.md` ("Como testar"): `ruff check . && ruff format --check .`, `pytest`, `python manage.py behave` (todos os cenários, não só o do passo 5) e `python manage.py makemigrations --check --dry-run`.
-8. **Pare.** Mostre a saída dos quatro comandos, liste os arquivos alterados e sugira a mensagem de commit no formato `feat(NNN): <o que mudou> (CA-xx)`. Não faça commit e não comece outro critério sem pedido.
+   Depois rode a prova completa (passo 8) para mostrar que só ele falha. Se passar antes de existir implementação, o teste nasceu verde: avise e não force um vermelho artificial.
+6. **Pare (vermelho).** Mostre o cenário, os passos novos e a saída vermelha, e sugira a mensagem de commit `test(NNN): <o comportamento> (CA-xx)`. A equipe aprova o teste e faz o commit; não implemente antes disso.
+7. Implemente o mínimo para o cenário passar, sem tocar no `.feature` nem nos passos desse critério. Se o critério depende de uma regra de cálculo (total, troco, totais do dia), escreva também o teste de unidade em `tests/test_<regra>.py`.
+8. Rode a prova completa, que é a mesma do `AGENTS.md` ("Como testar"): `ruff check . && ruff format --check .`, `pytest`, `python manage.py behave` (todos os cenários, não só o do passo 5) e `python manage.py makemigrations --check --dry-run`.
+9. **Pare (verde).** Mostre a saída dos quatro comandos, liste os arquivos alterados e sugira a mensagem de commit no formato `feat(NNN): <o que mudou> (CA-xx)`. Não faça commit e não comece outro critério sem pedido.
+
+Refatorar: uma melhoria por pedido, a prova completa antes e depois, sem mudar teste, e commit `refactor(NNN): <o que melhorou>`.
