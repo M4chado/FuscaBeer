@@ -15,8 +15,14 @@ def _nome(texto):
     return texto
 
 
+@with_pattern(r"\d{2}/\d{2}/\d{4}")
+def _data(texto):
+    return texto
+
+
 # {nome:Nome} não aceita aspas: 'adiciona 2 "A" e 1 "B"' não casa com 'adiciona {n} "{nome}"'.
-register_type(Nome=_nome)
+# {data:Data} só aceita dd/mm/aaaa: "no dia de operação corrente" fica para os passos da 002.
+register_type(Nome=_nome, Data=_data)
 
 
 def centavos(texto):
@@ -389,7 +395,7 @@ def ler_itens_da_tabela(texto_itens):
     return itens
 
 
-@given("que no dia de operação {data} o operador confirmou as vendas:")
+@given("que no dia de operação {data:Data} o operador confirmou as vendas:")
 def step_vendas_do_dia(context, data):
     for minuto, linha in enumerate(context.table):
         acertar_relogio(context, em_brasilia(data, f"20:{minuto:02d}"))
