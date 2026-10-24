@@ -18,6 +18,28 @@ def esperado_do_dia(dia):
     return totais_do_dia([(v.forma, v.total_centavos) for v in vendas])["por_forma"]
 
 
+def linhas_da_conferencia(dia, fechamento):
+    """Uma linha por forma. Sem conferência, só o esperado atual; com ela, o esperado guardado,
+    o contado e a divergência (RN-04, RN-07)."""
+    if fechamento is None:
+        esperado = esperado_do_dia(dia)
+        return [
+            {"forma": forma, "esperado": esperado[forma], "contado": None, "divergencia": ""}
+            for forma in FORMAS
+        ]
+    return [
+        {
+            "forma": forma,
+            "esperado": fechamento.esperado[forma],
+            "contado": fechamento.contado[forma],
+            "divergencia": descrever_divergencia(
+                fechamento.esperado[forma], fechamento.contado[forma]
+            ),
+        }
+        for forma in FORMAS
+    ]
+
+
 @login_required
 @require_GET
 def conferencia(request):
@@ -25,20 +47,7 @@ def conferencia(request):
     texto_dia = request.GET.get("dia")
     dia = date.fromisoformat(texto_dia) if texto_dia else dia_operacao(timezone.now())
     fechamento = Fechamento.objects.filter(dia_operacao=dia).first()
-    esperado = fechamento.esperado if fechamento else esperado_do_dia(dia)
-    linhas = [
-        {
-            "forma": forma,
-            "esperado": esperado[forma],
-            "contado": fechamento.contado[forma] if fechamento else None,
-            "divergencia": (
-                descrever_divergencia(esperado[forma], fechamento.contado[forma])
-                if fechamento
-                else ""
-            ),
-        }
-        for forma in FORMAS
-    ]
+    linhas = linhas_da_conferencia(dia, fechamento)
     contexto = {"dia": dia, "fechamento": fechamento, "linhas": linhas}
     return render(request, "caixa/conferencia.html", contexto)
 
