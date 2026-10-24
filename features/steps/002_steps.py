@@ -86,9 +86,28 @@ def step_situacao_do_caixa(context, situacao):
     assert marcador and marcador.get_text(strip=True) == situacao, marcador
 
 
+def mostra_divergencia(campos):
+    divergencia = campos.get("divergencia", "")
+    return "Falta" in divergencia or "Sobra" in divergencia
+
+
 @then("a tela não mostra divergência")
 def step_sem_divergencia(context):
     linhas = linhas_da_conferencia(context.resposta)
     assert linhas, "a tela não mostra a tabela de conferência"
-    divergencias = [c.get("divergencia", "") for c in linhas.values()]
-    assert not any("Falta" in d or "Sobra" in d for d in divergencias), linhas
+    assert not any(mostra_divergencia(c) for c in linhas.values()), linhas
+
+
+@then('a tela mostra "{divergencia}" em "{forma}"')
+def step_mostra_divergencia(context, divergencia, forma):
+    linhas = linhas_da_conferencia(context.resposta)
+    assert linhas.get(forma, {}).get("divergencia") == divergencia, linhas
+    context.forma_com_divergencia = forma
+
+
+@then("as outras formas não mostram divergência")
+def step_outras_sem_divergencia(context):
+    linhas = linhas_da_conferencia(context.resposta)
+    outras = {f: c for f, c in linhas.items() if f != context.forma_com_divergencia}
+    assert len(outras) == len(FORMAS) - 1, linhas
+    assert not any(mostra_divergencia(c) for c in outras.values()), linhas

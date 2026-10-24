@@ -31,3 +31,15 @@ Funcionalidade: Fechamento de caixa com conferência por forma de pagamento
     Quando o conferente informa os valores contados 18,00 / 0,00 / 8,00 / 26,00
     Então o caixa fica "Fechado"
     E a tela não mostra divergência
+
+  Esquema do Cenário: CA-02 Conferência com divergência deixa o caixa pendente
+    Quando o conferente informa os valores contados <dinheiro> / 0,00 / 8,00 / <pix>
+    Então o caixa fica "Pendente"
+    E a tela mostra "<divergência>" em "<forma>"
+    E as outras formas não mostram divergência
+
+    Exemplos:
+      | dinheiro | pix   | forma    | divergência       |
+      | 16,00    | 26,00 | Dinheiro | Falta de R$ 2,00  |
+      | 18,00    | 30,00 | Pix      | Sobra de R$ 4,00  |
+      | 17,99    | 26,00 | Dinheiro | Falta de R$ 0,01  |
