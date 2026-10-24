@@ -40,16 +40,20 @@ def linhas_da_conferencia(dia, fechamento):
     ]
 
 
+def tela_conferencia(request, dia, erros=(), status=200):
+    fechamento = Fechamento.objects.filter(dia_operacao=dia).first()
+    linhas = linhas_da_conferencia(dia, fechamento)
+    contexto = {"dia": dia, "fechamento": fechamento, "linhas": linhas, "erros": erros}
+    return render(request, "caixa/conferencia.html", contexto, status=status)
+
+
 @login_required
 @require_GET
 def conferencia(request):
     """GET /caixa/?dia=AAAA-MM-DD: conferência de um dia de operação (sem parâmetro: corrente)."""
     texto_dia = request.GET.get("dia")
     dia = date.fromisoformat(texto_dia) if texto_dia else dia_operacao(timezone.now())
-    fechamento = Fechamento.objects.filter(dia_operacao=dia).first()
-    linhas = linhas_da_conferencia(dia, fechamento)
-    contexto = {"dia": dia, "fechamento": fechamento, "linhas": linhas}
-    return render(request, "caixa/conferencia.html", contexto)
+    return tela_conferencia(request, dia)
 
 
 @login_required
@@ -57,8 +61,12 @@ def conferencia(request):
 def conferir(request):
     """POST /caixa/conferencia/: grava os quatro valores contados e a situação (RN-05)."""
     dia = date.fromisoformat(request.POST["dia"])
-    esperado = esperado_do_dia(dia)
     contado = {forma: para_centavos(request.POST.get(f"contado_{forma}", "")) for forma in FORMAS}
+    # RN-03: as quatro formas precisam de valor contado; nada é gravado se faltar algum.
+    erros = [f"Informe o valor contado de {forma}" for forma in FORMAS if contado[forma] is None]
+    if erros:
+        return tela_conferencia(request, dia, erros, status=422)
+    esperado = esperado_do_dia(dia)
     situacao = Fechamento.FECHADO if contado == esperado else Fechamento.PENDENTE
     Fechamento.objects.update_or_create(
         dia_operacao=dia,
