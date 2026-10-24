@@ -76,7 +76,15 @@ def step_valores_esperados(context):
 
 @when("o conferente informa os valores contados {dinheiro} / {debito} / {credito} / {pix}")
 def step_informa_contados(context, dinheiro, debito, credito, pix):
-    conferir_pela_tela(context, [dinheiro, debito, credito, pix])
+    contados = [dinheiro, debito, credito, pix]
+    conferir_pela_tela(context, ["" if valor == "(vazio)" else valor for valor in contados])
+
+
+@then("o dia de operação corrente continua sem conferência")
+def step_sem_conferencia(context):
+    tela = pagina(context.test.client.get("/caixa/"))
+    assert tela.select_one(".situacao-caixa") is None, tela.select_one(".situacao-caixa")
+    assert tela.select_one("form.conferir"), "a tela não oferece mais o formulário de conferência"
 
 
 @then('o caixa fica "{situacao}"')

@@ -43,3 +43,8 @@ Funcionalidade: Fechamento de caixa com conferência por forma de pagamento
       | 16,00    | 26,00 | Dinheiro | Falta de R$ 2,00  |
       | 18,00    | 30,00 | Pix      | Sobra de R$ 4,00  |
       | 17,99    | 26,00 | Dinheiro | Falta de R$ 0,01  |
+
+  Cenário: CA-03 Valor contado em branco
+    Quando o conferente informa os valores contados (vazio) / 0,00 / 8,00 / 26,00
+    Então a tela mostra a mensagem "Informe o valor contado de Dinheiro"
+    E o dia de operação corrente continua sem conferência
