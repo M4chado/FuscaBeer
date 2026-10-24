@@ -9,6 +9,7 @@ from vendas.models import Venda
 from vendas.regras import FORMAS, dia_operacao, para_centavos, totais_do_dia
 
 from .models import Fechamento
+from .regras import descrever_divergencia
 
 
 def esperado_do_dia(dia):
@@ -30,6 +31,11 @@ def conferencia(request):
             "forma": forma,
             "esperado": esperado[forma],
             "contado": fechamento.contado[forma] if fechamento else None,
+            "divergencia": (
+                descrever_divergencia(esperado[forma], fechamento.contado[forma])
+                if fechamento
+                else ""
+            ),
         }
         for forma in FORMAS
     ]

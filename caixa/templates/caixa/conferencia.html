@@ -14,7 +14,7 @@
         <th>{{ linha.forma }}</th>
         <td class="num esperado">{{ linha.esperado|reais }}</td>
         <td class="num contado">{% if linha.contado is not None %}{{ linha.contado|reais }}{% endif %}</td>
-        <td class="num divergencia"></td>
+        <td class="num divergencia">{{ linha.divergencia }}</td>
       </tr>
       {% endfor %}
     </tbody>
