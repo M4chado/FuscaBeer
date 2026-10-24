@@ -48,3 +48,11 @@ Funcionalidade: Fechamento de caixa com conferência por forma de pagamento
     Quando o conferente informa os valores contados (vazio) / 0,00 / 8,00 / 26,00
     Então a tela mostra a mensagem "Informe o valor contado de Dinheiro"
     E o dia de operação corrente continua sem conferência
+
+  # ---------- Caixa pendente ----------
+
+  Cenário: CA-04 Recontagem que bate fecha o caixa pendente
+    Dado que o conferente informou os valores contados 16,00 / 0,00 / 8,00 / 26,00
+    Quando o conferente informa os valores contados 18,00 / 0,00 / 8,00 / 26,00
+    Então o caixa fica "Fechado"
+    E a tela não mostra divergência

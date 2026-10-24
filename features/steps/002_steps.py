@@ -80,6 +80,12 @@ def step_informa_contados(context, dinheiro, debito, credito, pix):
     conferir_pela_tela(context, ["" if valor == "(vazio)" else valor for valor in contados])
 
 
+@given("que o conferente informou os valores contados {dinheiro} / {debito} / {credito} / {pix}")
+def step_informou_contados(context, dinheiro, debito, credito, pix):
+    conferir_pela_tela(context, [dinheiro, debito, credito, pix])
+    assert context.resposta.status_code == 200, context.resposta.status_code
+
+
 @then("o dia de operação corrente continua sem conferência")
 def step_sem_conferencia(context):
     tela = pagina(context.test.client.get("/caixa/"))
