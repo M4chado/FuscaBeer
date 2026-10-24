@@ -56,3 +56,10 @@ Funcionalidade: Fechamento de caixa com conferência por forma de pagamento
     Quando o conferente informa os valores contados 18,00 / 0,00 / 8,00 / 26,00
     Então o caixa fica "Fechado"
     E a tela não mostra divergência
+
+  Cenário: CA-05 Correção de venda antes da recontagem
+    Dado que o conferente informou os valores contados 18,00 / 0,00 / 0,00 / 26,00
+    E que o operador cancelou a venda em "Crédito" com o motivo "Cliente desistiu"
+    Quando o conferente informa os valores contados 18,00 / 0,00 / 0,00 / 26,00
+    Então o caixa fica "Fechado"
+    E a tela mostra esperado de R$ 0,00 em "Crédito"

@@ -23,6 +23,7 @@ def step_vendas_do_dia_corrente(context):
 
 
 @given('que a venda em "{forma}" foi cancelada com o motivo "{motivo}"')
+@given('que o operador cancelou a venda em "{forma}" com o motivo "{motivo}"')
 def step_venda_cancelada(context, forma, motivo):
     context.venda = next(v for v in context.vendas if v["forma"] == forma)
     passos_001.cancelar_pela_tela(context, motivo)
@@ -72,6 +73,12 @@ def step_valores_esperados(context):
     esperados = {forma: campos.get("esperado") for forma, campos in linhas.items()}
     tabela = {linha["forma"]: f"R$ {linha['esperado']}" for linha in context.table}
     assert esperados == tabela, esperados
+
+
+@then('a tela mostra esperado de R$ {valor} em "{forma}"')
+def step_esperado_da_forma(context, valor, forma):
+    linhas = linhas_da_conferencia(context.resposta)
+    assert linhas.get(forma, {}).get("esperado") == f"R$ {valor}", linhas
 
 
 @when("o conferente informa os valores contados {dinheiro} / {debito} / {credito} / {pix}")
